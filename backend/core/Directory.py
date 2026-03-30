@@ -3,18 +3,20 @@ import json
 import colorsys
 from pathlib import Path
 from backend.core.DebugFile import DebugFile
-from backend.core.DEFAULTS import DEFAULT_COLOR, DEFAULT_TOGGLED, DEFAULT_SET_MANUALLY, DEFAULT_EMOJI
+from backend.core.DEFAULTS import DEFAULT_COLOR, DEFAULT_TOGGLED, DEFAULT_SET_MANUALLY, DEFAULT_SET_MANUALLY_EMOJI, DEFAULT_EMOJI
 from backend.core.path_mngr import get_abspath, get_root_rel_path
 
 class Directory:
     def __init__(self, path, color=DEFAULT_COLOR, is_toggled=DEFAULT_TOGGLED, 
-                 set_manually=DEFAULT_SET_MANUALLY, emoji=DEFAULT_EMOJI):
+                 set_manually=DEFAULT_SET_MANUALLY, set_manually_emoji=DEFAULT_SET_MANUALLY_EMOJI,
+                 emoji=DEFAULT_EMOJI):
         self.path = path
         # print(f"Directory init: {self.path}")
         self.children = []  # Can contain DebugFile or other Directory objects
         self.color = color
         self.is_toggled = is_toggled
         self.set_manually = set_manually
+        self.set_manually_emoji = set_manually_emoji
         self.emoji = emoji
 
     def __str__(self):
@@ -103,6 +105,7 @@ class Directory:
             "color": self.color,
             "is_toggled": self.is_toggled,
             "set_manually": self.set_manually,
+            "set_manually_emoji": self.set_manually_emoji,
             "emoji": self.emoji,
             "children": [child.to_dict() if isinstance(child, DebugFile) else child.to_dict() for child in self.children]
         }
@@ -154,19 +157,20 @@ class Directory:
                     color=item.get('color', DEFAULT_COLOR), 
                     is_toggled=item.get('is_toggled', DEFAULT_TOGGLED), 
                     set_manually=item.get('set_manually', DEFAULT_SET_MANUALLY),
+                    set_manually_emoji=item.get('set_manually_emoji', DEFAULT_SET_MANUALLY_EMOJI),
                     emoji=item.get('emoji', DEFAULT_EMOJI)
                     )
                 
                 subdir.load_from_json(item['children'])
                 self.add_child(subdir)
             else:
-                # debug_file = DebugFile.from_dict(item, self)
                 debug_file = DebugFile(
                     filename=item['name'],
                     path=os.path.join(self.path, item['name']),
                     color=item.get('color', DEFAULT_COLOR),
                     is_toggled=item.get('is_toggled', DEFAULT_TOGGLED),
                     set_manually=item.get('set_manually', DEFAULT_SET_MANUALLY),
+                    set_manually_emoji=item.get('set_manually_emoji', DEFAULT_SET_MANUALLY_EMOJI),
                     emoji=item.get('emoji', DEFAULT_EMOJI),
                     directory=self
                 )
@@ -174,23 +178,27 @@ class Directory:
 
     def reset_colors(self):
         """
-        Resets the color of all DebugFile and Directory objects in this directory structure to the default color.
+        Resets the color and set_manually flag of all nodes to defaults.
         """
         self.color = DEFAULT_COLOR
+        self.set_manually = DEFAULT_SET_MANUALLY
         for child in self.children:
             if isinstance(child, DebugFile):
                 child.color = DEFAULT_COLOR
+                child.set_manually = DEFAULT_SET_MANUALLY
             elif isinstance(child, Directory):
                 child.reset_colors()
 
     def reset_emojis(self):
         """
-        Resets the emoji of all DebugFile and Directory objects in this directory structure to the default emoji.
+        Resets the emoji and set_manually_emoji flag of all nodes to defaults.
         """
         self.emoji = DEFAULT_EMOJI
+        self.set_manually_emoji = DEFAULT_SET_MANUALLY_EMOJI
         for child in self.children:
             if isinstance(child, DebugFile):
                 child.emoji = DEFAULT_EMOJI
+                child.set_manually_emoji = DEFAULT_SET_MANUALLY_EMOJI
             elif isinstance(child, Directory):
                 child.reset_emojis()
 

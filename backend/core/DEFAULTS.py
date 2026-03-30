@@ -3,5 +3,6 @@ TOGGLE_FILE = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'debug_to
 DEFAULT_COLOR = '#ffffff'
 DEFAULT_TOGGLED = False
 DEFAULT_SET_MANUALLY = False
+DEFAULT_SET_MANUALLY_EMOJI = False
 DEFAULT_EMOJI = '⚫'
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))

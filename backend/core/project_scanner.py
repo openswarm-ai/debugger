@@ -3,7 +3,7 @@ import json
 import colorsys
 from typing import Union
 from backend.core.Directory import Directory
-from backend.core.DEFAULTS import DEFAULT_COLOR, DEFAULT_TOGGLED, DEFAULT_SET_MANUALLY, TOGGLE_FILE, DEFAULT_EMOJI, ROOT_DIR
+from backend.core.DEFAULTS import DEFAULT_COLOR, DEFAULT_TOGGLED, DEFAULT_SET_MANUALLY, DEFAULT_SET_MANUALLY_EMOJI, TOGGLE_FILE, DEFAULT_EMOJI, ROOT_DIR
 from backend.core.DebugFile import DebugFile
 from collections import OrderedDict
 
@@ -40,17 +40,17 @@ def merge_directories(json_dir: Directory, scanned_dir: Directory):
             matching_json_child = find_matching_in_structure(scanned_child, json_dir)
             
             if isinstance(scanned_child, DebugFile) and matching_json_child:
-                # Merge attributes from the JSON-loaded structure
                 scanned_child.color = matching_json_child.color
                 scanned_child.is_toggled = matching_json_child.is_toggled
                 scanned_child.set_manually = matching_json_child.set_manually
+                scanned_child.set_manually_emoji = matching_json_child.set_manually_emoji
                 scanned_child.emoji = matching_json_child.emoji
 
             elif isinstance(scanned_child, Directory) and matching_json_child:
-                # Merge directory attributes
                 scanned_child.color = matching_json_child.color
                 scanned_child.is_toggled = matching_json_child.is_toggled
                 scanned_child.set_manually = matching_json_child.set_manually
+                scanned_child.set_manually_emoji = matching_json_child.set_manually_emoji
                 scanned_child.emoji = matching_json_child.emoji
 
                 # Recursively merge the subdirectories
@@ -59,6 +59,7 @@ def merge_directories(json_dir: Directory, scanned_dir: Directory):
                 scanned_child.color = DEFAULT_COLOR
                 scanned_child.is_toggled = DEFAULT_TOGGLED
                 scanned_child.set_manually = DEFAULT_SET_MANUALLY
+                scanned_child.set_manually_emoji = DEFAULT_SET_MANUALLY_EMOJI
                 scanned_child.emoji = DEFAULT_EMOJI
     
     construct_merged_dir(json_dir, scanned_dir)
@@ -76,6 +77,7 @@ def update_debug_toggles(save_to_file=True) -> Directory:
                                             color=json_data[0].get('color', DEFAULT_COLOR),
                                             is_toggled=json_data[0].get('is_toggled', DEFAULT_TOGGLED),
                                             set_manually=json_data[0].get('set_manually', DEFAULT_SET_MANUALLY),
+                                            set_manually_emoji=json_data[0].get('set_manually_emoji', DEFAULT_SET_MANUALLY_EMOJI),
                                             emoji=json_data[0].get('emoji', DEFAULT_EMOJI)
                                             )
                 # print(f"Root: {json_loaded_dir}")
@@ -96,6 +98,7 @@ def update_debug_toggles(save_to_file=True) -> Directory:
                             color=json_loaded_dir.color if json_loaded_dir else DEFAULT_COLOR, 
                             is_toggled=json_loaded_dir.is_toggled if json_loaded_dir else DEFAULT_TOGGLED, 
                             set_manually=json_loaded_dir.set_manually if json_loaded_dir else DEFAULT_SET_MANUALLY,
+                            set_manually_emoji=json_loaded_dir.set_manually_emoji if json_loaded_dir else DEFAULT_SET_MANUALLY_EMOJI,
                             emoji=json_loaded_dir.emoji if json_loaded_dir else DEFAULT_EMOJI
                             )
     # print(f"\n\nNum Children 1: {len(scanned_dir.children)}")
@@ -133,10 +136,11 @@ def update_debug_toggles(save_to_file=True) -> Directory:
 def dir_to_output_format(input_dir):
     root_node = {
         "name": "root",
-        "color": input_dir.color,  # Use input_dir's color
-        "is_toggled": input_dir.is_toggled,  # Use input_dir's toggled state
-        "set_manually": input_dir.set_manually,  # Use input_dir's set_manually
-        "emoji": input_dir.emoji,  # Use input_dir's emoji
+        "color": input_dir.color,
+        "is_toggled": input_dir.is_toggled,
+        "set_manually": input_dir.set_manually,
+        "set_manually_emoji": input_dir.set_manually_emoji,
+        "emoji": input_dir.emoji,
         "children": input_dir.to_dict()["children"]
     }
     return [ordered(root_node)]

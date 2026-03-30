@@ -256,11 +256,14 @@ const debuggerSlice = createSlice({
 
       const propagateEmoji = (node: TreeNodeData, em: string): TreeNodeData => {
         if (!node.children) return node;
-        const updatedChildren = node.children.map((child) => ({
-          ...child,
-          emoji: em,
-          children: propagateEmoji(child, em).children,
-        }));
+        const updatedChildren = node.children.map((child) => {
+          if (child.set_manually_emoji) return child;
+          return {
+            ...child,
+            emoji: em,
+            children: propagateEmoji(child, em).children,
+          };
+        });
         return { ...node, children: updatedChildren };
       };
 
@@ -270,12 +273,13 @@ const debuggerSlice = createSlice({
             let updatedNode = { ...node };
             if (parts.length === 1) {
               updatedNode.emoji = em;
+              updatedNode.set_manually_emoji = true;
             }
             if (node.children && parts.length > 1) {
               updatedNode = { ...updatedNode, children: updateNode(node.children, parts.slice(1), em) };
             }
             if (parts.length === 1 && node.children) {
-              updatedNode.children = propagateEmoji(node, em).children;
+              updatedNode.children = propagateEmoji(updatedNode, em).children;
             }
             return updatedNode;
           }
