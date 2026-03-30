@@ -22,11 +22,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from fastapi.staticfiles import StaticFiles
+
+BUILD_DIR = os.path.join(os.path.dirname(__file__), 'debugger_gui_build')
+
+if os.path.isdir(BUILD_DIR):
+    app.mount("/", StaticFiles(directory=BUILD_DIR, html=True), name="gui")
+
 
 def main():
     import uvicorn
     port = int(os.environ.get("BACKEND_PORT", 8324))
-    uvicorn.run("backend.main:app", host="0.0.0.0", port=port, reload=True)
+    uvicorn.run("backend.main:app", host="0.0.0.0", port=port, reload=False)
 
 
 if __name__ == "__main__":

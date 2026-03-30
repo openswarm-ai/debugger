@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "openswarm-debug"
+version = "0.1.0"
+description = "A colorized, toggleable debug logger with a web GUI"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.9"
+dependencies = [
+    "fastapi[standard]",
+    "typeguard>=4.4",
+    "uvicorn[standard]",
+]
+
+[project.scripts]
+debug-server = "backend.main:main"
+
+[tool.setuptools]
+py-modules = ["debug"]
+packages = [
+    "backend",
+    "backend.config",
+    "backend.apps",
+    "backend.apps.health",
+    "backend.apps.debugger",
+    "backend.core",
+]
+
+[tool.setuptools.package-data]
+backend = ["debugger_gui_build/**/*", "debug_toggles.json", "log_mode.txt", "needs_resync.txt"]
