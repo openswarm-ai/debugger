@@ -1,46 +1,66 @@
 import React from 'react';
-import { SaveStatus } from '@/types';
+import Button from '@mui/material/Button';
+import CircularProgress from '@mui/material/CircularProgress';
+import SaveIcon from '@mui/icons-material/Save';
+import CheckIcon from '@mui/icons-material/Check';
+import { AnimatePresence, motion } from 'framer-motion';
+import { useClaudeTokens } from '@/shared/styles/ThemeContext';
+import { useAppDispatch, useAppSelector } from '@/shared/hooks';
+import { pushStructure } from '@/shared/state/debuggerSlice';
 
-const SaveIcon: React.FC = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
-    <polyline points="17 21 17 13 7 13 7 21" />
-    <polyline points="7 3 7 8 15 8" />
-  </svg>
-);
+const PushButton: React.FC = () => {
+  const c = useClaudeTokens();
+  const dispatch = useAppDispatch();
+  const dirty = useAppSelector((s) => s.debugger.dirty);
+  const saveStatus = useAppSelector((s) => s.debugger.saveStatus);
 
-const SpinnerIcon: React.FC = () => (
-  <svg className="save-spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-  </svg>
-);
-
-const CheckIcon: React.FC = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="20 6 9 17 4 12" />
-  </svg>
-);
-
-interface PushButtonProps {
-  onSave: () => void;
-  disabled: boolean;
-  saveStatus: SaveStatus;
-}
-
-const PushButton: React.FC<PushButtonProps> = ({ onSave, disabled, saveStatus }) => {
   const isSaving = saveStatus === 'saving';
   const isSaved = saveStatus === 'saved';
+  const disabled = (!dirty && saveStatus === 'idle') || isSaving;
 
   return (
-    <button
-      className={`toolbar-btn ${isSaving ? 'toolbar-btn-saving' : ''} ${isSaved ? 'toolbar-btn-saved' : ''}`}
-      onClick={onSave}
-      disabled={disabled || isSaving}
-      aria-label="Save"
+    <Button
+      onClick={() => dispatch(pushStructure())}
+      disabled={disabled}
+      size="small"
+      sx={{
+        height: 32,
+        px: 1.5,
+        gap: 0.75,
+        bgcolor: 'transparent',
+        color: isSaved ? c.status.success : c.text.tertiary,
+        textTransform: 'none',
+        fontFamily: 'inherit',
+        fontSize: '0.8rem',
+        fontWeight: 500,
+        borderRadius: `${c.radius.md}px`,
+        whiteSpace: 'nowrap',
+        transition: c.transition,
+        '&:hover:not(:disabled)': { bgcolor: c.bg.elevated, color: c.text.primary },
+        '&:active:not(:disabled)': { transform: 'scale(0.97)' },
+        '&:disabled': { opacity: 0.3 },
+      }}
     >
-      {isSaving ? <SpinnerIcon /> : isSaved ? <CheckIcon /> : <SaveIcon />}
-      {isSaving ? 'Saving' : isSaved ? 'Saved' : 'Save'}
-    </button>
+      <AnimatePresence mode="wait">
+        <motion.span
+          key={saveStatus}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.15 }}
+          style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+        >
+          {isSaving ? (
+            <CircularProgress size={16} sx={{ color: c.text.tertiary }} />
+          ) : isSaved ? (
+            <CheckIcon sx={{ fontSize: 16 }} />
+          ) : (
+            <SaveIcon sx={{ fontSize: 16 }} />
+          )}
+          {isSaving ? 'Saving' : isSaved ? 'Saved' : 'Save'}
+        </motion.span>
+      </AnimatePresence>
+    </Button>
   );
 };
 

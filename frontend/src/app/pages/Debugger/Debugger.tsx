@@ -1,414 +1,180 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useEffect, useRef } from 'react';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
+import CircularProgress from '@mui/material/CircularProgress';
+import { motion } from 'framer-motion';
+import { useClaudeTokens } from '@/shared/styles/ThemeContext';
+import { useAppDispatch, useAppSelector } from '@/shared/hooks';
+import { pullWithRetry, pushStructure, setSaveStatus, setShowSettings } from '@/shared/state/debuggerSlice';
 import DebuggerHeader from '@/app/pages/Debugger/DebuggerHeader';
 import SettingsModal from '@/app/components/SettingsModal/SettingsModal';
 import Tree from '@/app/components/Tree/Tree';
-import {
-  PULL_STRUCTURE_URL,
-  PUSH_STRUCTURE_URL,
-  RESET_COLOR_URL,
-  RESET_EMOJI_URL,
-} from '@/shared/state/API_ENDPOINTS';
-import { TreeNodeData, DebuggerSettings, SaveStatus, ExpandedState } from '@/types';
-import './Debugger.css';
-
-const DEFAULT_SETTINGS: DebuggerSettings = {
-  pullRetryCount: 3,
-  pullRetryDelay: 2,
-  autoSave: false,
-  defaultExpanded: true,
-};
-
-const buildExpandedState = (nodes: TreeNodeData[], parentId = ''): ExpandedState => {
-  const result: ExpandedState = {};
-  if (!Array.isArray(nodes)) return result;
-  nodes.forEach(node => {
-    const nodeId = parentId ? `${parentId}/${node.name}` : node.name;
-    if (node.children && node.children.length > 0) {
-      result[nodeId] = true;
-      Object.assign(result, buildExpandedState(node.children, nodeId));
-    }
-  });
-  return result;
-};
 
 const Debugger: React.FC = () => {
-  const [projectStructure, setProjectStructure] = useState<TreeNodeData[] | null>(null);
-  const [expanded, setExpanded] = useState<ExpandedState>({});
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [showSettings, setShowSettings] = useState(false);
-  const [dirty, setDirty] = useState(false);
-  const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
-  const [settings, setSettings] = useState<DebuggerSettings>(() => {
-    try {
-      const saved = localStorage.getItem('debugger-settings');
-      return saved ? { ...DEFAULT_SETTINGS, ...JSON.parse(saved) } : DEFAULT_SETTINGS;
-    } catch {
-      return DEFAULT_SETTINGS;
-    }
-  });
+  const c = useClaudeTokens();
+  const dispatch = useAppDispatch();
+  const projectStructure = useAppSelector((s) => s.debugger.projectStructure);
+  const loading = useAppSelector((s) => s.debugger.loading);
+  const error = useAppSelector((s) => s.debugger.error);
+  const dirty = useAppSelector((s) => s.debugger.dirty);
+  const saveStatus = useAppSelector((s) => s.debugger.saveStatus);
+  const settings = useAppSelector((s) => s.debugger.settings);
+  const showSettings = useAppSelector((s) => s.debugger.showSettings);
 
-  const projectStructureRef = useRef<TreeNodeData[] | null>(null);
-  const dirtyRef = useRef(false);
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const settingsRef = useRef(settings);
-
-  useEffect(() => { settingsRef.current = settings; }, [settings]);
-  useEffect(() => { projectStructureRef.current = projectStructure; }, [projectStructure]);
-  useEffect(() => { localStorage.setItem('debugger-settings', JSON.stringify(settings)); }, [settings]);
 
   useEffect(() => {
+    dispatch(pullWithRetry());
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (saveStatus === 'saved') {
+      savedTimerRef.current = setTimeout(() => dispatch(setSaveStatus('idle')), 1500);
+    }
+    return () => {
+      if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+    };
+  }, [saveStatus, dispatch]);
+
+  useEffect(() => {
+    if (!settings.autoSave || !dirty) return;
+    autoSaveTimerRef.current = setTimeout(() => {
+      dispatch(pushStructure());
+    }, 1500);
     return () => {
       if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
-      if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
     };
-  }, []);
-
-  const pullStructure = useCallback(async (): Promise<TreeNodeData[]> => {
-    const response = await fetch(PULL_STRUCTURE_URL);
-    return response.json();
-  }, []);
-
-  const pullWithRetry = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    const { pullRetryCount, pullRetryDelay } = settingsRef.current;
-
-    for (let attempt = 1; attempt <= pullRetryCount; attempt++) {
-      try {
-        const data = await pullStructure();
-        setProjectStructure(data);
-        if (settingsRef.current.defaultExpanded) {
-          setExpanded(buildExpandedState(data));
-        } else {
-          setExpanded({});
-        }
-        setLoading(false);
-        return true;
-      } catch {
-        if (attempt < pullRetryCount) {
-          await new Promise(resolve => setTimeout(resolve, pullRetryDelay * 1000));
-        }
-      }
-    }
-
-    setError(
-      `Failed to connect to the backend after ${pullRetryCount} attempt${pullRetryCount !== 1 ? 's' : ''}. ` +
-      `Make sure the server is running.`,
-    );
-    setLoading(false);
-    return false;
-  }, [pullStructure]);
-
-  useEffect(() => { pullWithRetry(); }, [pullWithRetry]);
-
-  const handleSave = useCallback(async () => {
-    const current = projectStructureRef.current;
-    if (!current) return;
-    if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
-    setSaveStatus('saving');
-    try {
-      await fetch(PUSH_STRUCTURE_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ projectStructure: current }),
-      });
-      const data = await pullStructure();
-      setProjectStructure(data);
-      dirtyRef.current = false;
-      setDirty(false);
-      setSaveStatus('saved');
-      savedTimerRef.current = setTimeout(() => setSaveStatus('idle'), 1500);
-    } catch (err) {
-      console.error('Error saving project structure:', err);
-      setSaveStatus('idle');
-    }
-  }, [pullStructure]);
-
-  const handleRefresh = useCallback(async () => {
-    try {
-      const data = await pullStructure();
-      setProjectStructure(data);
-      if (settingsRef.current.defaultExpanded) {
-        setExpanded(buildExpandedState(data));
-      } else {
-        setExpanded({});
-      }
-      dirtyRef.current = false;
-      setDirty(false);
-      setSaveStatus('idle');
-      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
-      if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
-    } catch (err) {
-      console.error('Error refreshing project structure:', err);
-    }
-  }, [pullStructure]);
-
-  const handleResetColors = useCallback(async () => {
-    try {
-      const resetResponse = await fetch(RESET_COLOR_URL, { method: 'POST' });
-      const resetData: TreeNodeData[] = await resetResponse.json();
-      setProjectStructure(resetData);
-      projectStructureRef.current = resetData;
-      if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
-      setSaveStatus('saving');
-      await fetch(PUSH_STRUCTURE_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ projectStructure: resetData }),
-      });
-      const fresh = await pullStructure();
-      setProjectStructure(fresh);
-      dirtyRef.current = false;
-      setDirty(false);
-      setSaveStatus('saved');
-      savedTimerRef.current = setTimeout(() => setSaveStatus('idle'), 1500);
-    } catch (err) {
-      console.error('Error resetting colors:', err);
-      setSaveStatus('idle');
-    }
-  }, [pullStructure]);
-
-  const handleResetEmojis = useCallback(async () => {
-    try {
-      const resetResponse = await fetch(RESET_EMOJI_URL, { method: 'POST' });
-      const resetData: TreeNodeData[] = await resetResponse.json();
-      setProjectStructure(resetData);
-      projectStructureRef.current = resetData;
-      if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
-      setSaveStatus('saving');
-      await fetch(PUSH_STRUCTURE_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ projectStructure: resetData }),
-      });
-      const fresh = await pullStructure();
-      setProjectStructure(fresh);
-      dirtyRef.current = false;
-      setDirty(false);
-      setSaveStatus('saved');
-      savedTimerRef.current = setTimeout(() => setSaveStatus('idle'), 1500);
-    } catch (err) {
-      console.error('Error resetting emojis:', err);
-      setSaveStatus('idle');
-    }
-  }, [pullStructure]);
-
-  const triggerAutoSave = useCallback(() => {
-    if (!settingsRef.current.autoSave) return;
-    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
-    autoSaveTimerRef.current = setTimeout(() => {
-      if (dirtyRef.current) handleSave();
-    }, 1500);
-  }, [handleSave]);
-
-  const markDirty = useCallback(() => {
-    dirtyRef.current = true;
-    setDirty(true);
-    setSaveStatus('idle');
-    if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
-    triggerAutoSave();
-  }, [triggerAutoSave]);
-
-  const handleExpandClick = (id: string) => {
-    setExpanded((prevExpanded) => ({ ...prevExpanded, [id]: !prevExpanded[id] }));
-  };
-
-  const handleCheckboxChange = (nodeId: string, checked: boolean) => {
-    const updateNode = (nodes: TreeNodeData[], pathParts: string[], checked: boolean, forceCheck = false): TreeNodeData[] => {
-      return nodes.map((node) => {
-        if (node.name === pathParts[0]) {
-          const shouldCheck = checked || forceCheck;
-          if (pathParts.length === 1) {
-            return { ...node, is_toggled: shouldCheck, children: updateChildren(node.children, shouldCheck) };
-          }
-          if (node.children) {
-            const updatedChildren = updateNode(node.children, pathParts.slice(1), checked, shouldCheck);
-            return { ...node, is_toggled: shouldCheck, children: updatedChildren };
-          }
-          return { ...node, is_toggled: shouldCheck };
-        }
-        return node;
-      });
-    };
-
-    const updateChildren = (children: TreeNodeData[] | undefined, checked: boolean): TreeNodeData[] => {
-      if (!children) return [];
-      return children.map((child) => ({
-        ...child,
-        is_toggled: checked,
-        children: updateChildren(child.children, checked),
-      }));
-    };
-
-    setProjectStructure((prevStructure) => {
-      if (!prevStructure) return prevStructure;
-      const pathParts = nodeId.split('/');
-      return updateNode(prevStructure, pathParts, checked);
-    });
-    markDirty();
-  };
-
-  const handleEmojiChange = (nodeId: string, emoji: string) => {
-    const propagateEmojiToChildren = (node: TreeNodeData): TreeNodeData => {
-      if (!node.children) return node;
-      const updatedChildren = node.children.map((child) => ({
-        ...child,
-        emoji,
-        children: propagateEmojiToChildren(child).children,
-      }));
-      return { ...node, children: updatedChildren };
-    };
-
-    const updateNode = (nodes: TreeNodeData[], pathParts: string[], emoji: string): TreeNodeData[] => {
-      return nodes.map((node) => {
-        if (node.name === pathParts[0]) {
-          let updatedNode = { ...node };
-          if (pathParts.length === 1) {
-            updatedNode.emoji = emoji;
-          }
-          if (node.children && pathParts.length > 1) {
-            const updatedChildren = updateNode(node.children, pathParts.slice(1), emoji);
-            updatedNode = { ...updatedNode, children: updatedChildren };
-          }
-          if (pathParts.length === 1 && node.children) {
-            updatedNode.children = propagateEmojiToChildren(node).children;
-          }
-          return updatedNode;
-        }
-        return node;
-      });
-    };
-
-    setProjectStructure((prevStructure) => {
-      if (!prevStructure) return prevStructure;
-      const pathParts = nodeId.split('/');
-      return updateNode(prevStructure, pathParts, emoji);
-    });
-    markDirty();
-  };
-
-  const handleColorChange = (nodeId: string, color: string) => {
-    const amount = 50;
-
-    const lightenColor = (color: string, amt = 50): string => {
-      if (!color || typeof color !== 'string' || !color.startsWith('#') || color.length !== 7) {
-        return '#ffffff';
-      }
-      const colorInt = parseInt(color.slice(1), 16);
-      const r = Math.min(255, (colorInt >> 16) + amt);
-      const g = Math.min(255, ((colorInt >> 8) & 0x00FF) + amt);
-      const b = Math.min(255, (colorInt & 0x0000FF) + amt);
-      return `#${((r << 16) + (g << 8) + b).toString(16).padStart(6, '0')}`;
-    };
-
-    const updateNode = (nodes: TreeNodeData[], pathParts: string[], color: string, isOriginalParent = false): TreeNodeData[] => {
-      return nodes.map((node) => {
-        if (node.name === pathParts[0]) {
-          let newColor = node.color;
-          let set_manually = node.set_manually;
-
-          if (pathParts.length === 1) {
-            if (isOriginalParent) set_manually = true;
-            newColor = color;
-          }
-
-          if (node.children) {
-            const updatedChildren = updateNode(node.children, pathParts.slice(1), color, isOriginalParent);
-            const propagatedChildren = updatedChildren.map((child) => {
-              if (!child.set_manually) {
-                const newPath = [...pathParts.slice(1), child.name];
-                return updateNode([child], newPath, lightenColor(color, amount), false)[0];
-              }
-              return child;
-            });
-            return { ...node, color: newColor, is_toggled: node.is_toggled, set_manually, children: propagatedChildren };
-          }
-          return { ...node, color: newColor, is_toggled: node.is_toggled, set_manually };
-        }
-        return node;
-      });
-    };
-
-    setProjectStructure((prevStructure) => {
-      if (!prevStructure) return prevStructure;
-      const pathParts = nodeId.split('/');
-      return updateNode(prevStructure, pathParts, color, true);
-    });
-    markDirty();
-  };
+  }, [dirty, settings.autoSave, dispatch]);
 
   return (
-    <div className="app">
-      <DebuggerHeader
-        onSave={handleSave}
-        onRefresh={handleRefresh}
-        dirty={dirty}
-        saveStatus={saveStatus}
-        onOpenSettings={() => setShowSettings(true)}
-      />
+    <Box sx={{ minHeight: '100vh', bgcolor: c.bg.page, color: c.text.primary }}>
+      <DebuggerHeader />
 
-      <main className="app-main">
+      <Box
+        component="main"
+        sx={{ maxWidth: 960, mx: 'auto', px: 3, pt: 3, pb: 6 }}
+      >
         {projectStructure ? (
-          <div className="tree-card">
-            <Tree
-              projectStructure={projectStructure}
-              expanded={expanded}
-              handleExpandClick={handleExpandClick}
-              handleCheckboxChange={handleCheckboxChange}
-              handleColorChange={handleColorChange}
-              handleEmojiChange={handleEmojiChange}
-            />
-          </div>
+          <Box
+            sx={{
+              bgcolor: c.bg.surface,
+              border: `1px solid ${c.border.subtle}`,
+              borderRadius: `${c.radius.xl}px`,
+              boxShadow: c.shadow.sm,
+              p: 1,
+            }}
+          >
+            <Tree />
+          </Box>
         ) : loading ? (
-          <div className="empty-state">
-            <div className="empty-state-icon loading-pulse">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-              </svg>
-            </div>
-            <h3>Connecting...</h3>
-            <p>Loading your project's debug configuration.</p>
-          </div>
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 10, textAlign: 'center' }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: 56,
+                  height: 56,
+                  borderRadius: `${c.radius.xl}px`,
+                  bgcolor: c.bg.elevated,
+                  mb: 2.5,
+                }}
+              >
+                <CircularProgress size={24} sx={{ color: c.text.tertiary }} />
+              </Box>
+              <Typography sx={{ fontSize: '1rem', fontWeight: 600, mb: 1 }}>Connecting...</Typography>
+              <Typography sx={{ fontSize: '0.85rem', color: c.text.tertiary, maxWidth: 320 }}>
+                Loading your project's debug configuration.
+              </Typography>
+            </Box>
+          </motion.div>
         ) : error ? (
-          <div className="empty-state">
-            <div className="empty-state-icon error-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10" />
-                <line x1="12" y1="8" x2="12" y2="12" />
-                <line x1="12" y1="16" x2="12.01" y2="16" />
-              </svg>
-            </div>
-            <h3>Connection failed</h3>
-            <p>{error}</p>
-            <button className="retry-btn" onClick={pullWithRetry}>Retry</button>
-          </div>
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 10, textAlign: 'center' }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: 56,
+                  height: 56,
+                  borderRadius: `${c.radius.xl}px`,
+                  bgcolor: c.status.errorBg,
+                  color: c.status.error,
+                  mb: 2.5,
+                }}
+              >
+                <Typography sx={{ fontSize: 24 }}>!</Typography>
+              </Box>
+              <Typography sx={{ fontSize: '1rem', fontWeight: 600, mb: 1 }}>Connection failed</Typography>
+              <Typography sx={{ fontSize: '0.85rem', color: c.text.tertiary, maxWidth: 320, lineHeight: 1.5 }}>
+                {error}
+              </Typography>
+              <Button
+                onClick={() => dispatch(pullWithRetry())}
+                sx={{
+                  mt: 2.5,
+                  height: 36,
+                  px: 2.5,
+                  bgcolor: c.accent.primary,
+                  color: '#fff',
+                  textTransform: 'none',
+                  fontWeight: 500,
+                  fontSize: '0.85rem',
+                  borderRadius: `${c.radius.md}px`,
+                  '&:hover': { bgcolor: c.accent.hover },
+                  '&:active': { transform: 'scale(0.97)', bgcolor: c.accent.pressed },
+                  transition: c.transition,
+                }}
+              >
+                Retry
+              </Button>
+            </Box>
+          </motion.div>
         ) : (
-          <div className="empty-state">
-            <div className="empty-state-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
-                <polyline points="7 10 12 15 17 10" />
-                <line x1="12" y1="15" x2="12" y2="3" />
-              </svg>
-            </div>
-            <h3>No configuration loaded</h3>
-            <p>Could not load your project's debug configuration.</p>
-          </div>
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 10, textAlign: 'center' }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: 56,
+                  height: 56,
+                  borderRadius: `${c.radius.xl}px`,
+                  bgcolor: c.bg.elevated,
+                  color: c.text.tertiary,
+                  mb: 2.5,
+                }}
+              >
+                <Typography sx={{ fontSize: 24, opacity: 0.6 }}>?</Typography>
+              </Box>
+              <Typography sx={{ fontSize: '1rem', fontWeight: 600, mb: 1 }}>No configuration loaded</Typography>
+              <Typography sx={{ fontSize: '0.85rem', color: c.text.tertiary, maxWidth: 320 }}>
+                Could not load your project's debug configuration.
+              </Typography>
+            </Box>
+          </motion.div>
         )}
-      </main>
+      </Box>
 
-      {showSettings && (
-        <SettingsModal
-          settings={settings}
-          setSettings={setSettings}
-          onResetColors={handleResetColors}
-          onResetEmojis={handleResetEmojis}
-          onClose={() => setShowSettings(false)}
-        />
-      )}
-    </div>
+      {showSettings && <SettingsModal />}
+    </Box>
   );
 };
 

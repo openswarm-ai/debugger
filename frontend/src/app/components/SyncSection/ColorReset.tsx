@@ -1,19 +1,41 @@
 import React from 'react';
+import Button from '@mui/material/Button';
+import RefreshIcon from '@mui/icons-material/Refresh';
+import { useClaudeTokens } from '@/shared/styles/ThemeContext';
+import { useAppDispatch, useAppSelector } from '@/shared/hooks';
+import { pullWithRetry } from '@/shared/state/debuggerSlice';
 
-interface ColorResetProps {
-  onRefresh: () => void;
-  disabled: boolean;
-}
+const ColorReset: React.FC = () => {
+  const c = useClaudeTokens();
+  const dispatch = useAppDispatch();
+  const dirty = useAppSelector((s) => s.debugger.dirty);
 
-const ColorReset: React.FC<ColorResetProps> = ({ onRefresh, disabled }) => {
   return (
-    <button className="toolbar-btn" onClick={onRefresh} disabled={disabled}>
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <polyline points="23 4 23 10 17 10" />
-        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
-      </svg>
+    <Button
+      onClick={() => dispatch(pullWithRetry())}
+      disabled={!dirty}
+      size="small"
+      sx={{
+        height: 32,
+        px: 1.5,
+        gap: 0.75,
+        bgcolor: 'transparent',
+        color: c.text.tertiary,
+        textTransform: 'none',
+        fontFamily: 'inherit',
+        fontSize: '0.8rem',
+        fontWeight: 500,
+        borderRadius: `${c.radius.md}px`,
+        whiteSpace: 'nowrap',
+        transition: c.transition,
+        '&:hover:not(:disabled)': { bgcolor: c.bg.elevated, color: c.text.primary },
+        '&:active:not(:disabled)': { transform: 'scale(0.97)' },
+        '&:disabled': { opacity: 0.3 },
+      }}
+    >
+      <RefreshIcon sx={{ fontSize: 16 }} />
       Refresh
-    </button>
+    </Button>
   );
 };
 

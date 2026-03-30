@@ -40,41 +40,6 @@ This is what Jupyter, MLflow, Streamlit, Gradio all do:
 
 ---
 
-## Target repo structure
-
-```
-openswarm-debug/
-├── pyproject.toml
-├── README.md
-├── LICENSE
-├── debug.py                    # the import debug function
-├── debugger_backend/
-│   ├── __init__.py
-│   ├── debugger_server.py      # Flask server (modify to serve static GUI build)
-│   ├── Debugleton.py
-│   ├── project_scanner.py
-│   ├── path_mngr.py
-│   ├── log_config.py
-│   ├── log_mode.py
-│   ├── debug_arg_parser.py
-│   ├── color_adjuster.py
-│   ├── File.py
-│   ├── Directory.py
-│   ├── DebugFile.py
-│   ├── DEFAULTS.py
-│   └── ...
-├── debugger_gui/               # React source (for development only, NOT shipped)
-│   ├── src/
-│   ├── package.json
-│   └── ...
-└── debugger_gui_build/         # pre-built React app (included in pip package)
-    ├── index.html
-    ├── static/
-    └── ...
-```
-
----
-
 ## pyproject.toml template
 
 ```toml

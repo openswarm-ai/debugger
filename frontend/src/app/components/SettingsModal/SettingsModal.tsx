@@ -1,197 +1,307 @@
 import React, { useState } from 'react';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import IconButton from '@mui/material/IconButton';
+import Button from '@mui/material/Button';
+import Switch from '@mui/material/Switch';
+import TextField from '@mui/material/TextField';
+import Tooltip from '@mui/material/Tooltip';
+import CloseIcon from '@mui/icons-material/Close';
+import PaletteIcon from '@mui/icons-material/Palette';
+import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useClaudeTokens } from '@/shared/styles/ThemeContext';
+import { useAppDispatch, useAppSelector } from '@/shared/hooks';
+import {
+  updateSettings,
+  resetColors,
+  resetEmojis,
+  setShowSettings,
+} from '@/shared/state/debuggerSlice';
 import { DebuggerSettings } from '@/types';
-import './SettingsModal.css';
 
-interface NumberStepperProps {
-  value: number;
-  min: number;
-  max: number;
-  onChange: (value: number) => void;
-}
-
-const NumberStepper: React.FC<NumberStepperProps> = ({ value, min, max, onChange }) => {
-  const increment = () => onChange(Math.min(max, value + 1));
-  const decrement = () => onChange(Math.max(min, value - 1));
-
-  return (
-    <div className="number-stepper">
-      <input
-        type="number"
-        className="number-stepper-input"
-        value={value}
-        min={min}
-        max={max}
-        onChange={e => onChange(Math.max(min, Math.min(max, parseInt(e.target.value) || min)))}
-      />
-      <div className="number-stepper-controls">
-        <button
-          className="number-stepper-btn"
-          onClick={increment}
-          disabled={value >= max}
-          aria-label="Increment"
-          tabIndex={-1}
-        >
-          <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="3 7.5 6 4.5 9 7.5" />
-          </svg>
-        </button>
-        <button
-          className="number-stepper-btn"
-          onClick={decrement}
-          disabled={value <= min}
-          aria-label="Decrement"
-          tabIndex={-1}
-        >
-          <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="3 4.5 6 7.5 9 4.5" />
-          </svg>
-        </button>
-      </div>
-    </div>
-  );
-};
-
-interface SettingsModalProps {
-  settings: DebuggerSettings;
-  setSettings: React.Dispatch<React.SetStateAction<DebuggerSettings>>;
-  onResetColors: () => void;
-  onResetEmojis: () => void;
-  onClose: () => void;
-}
-
-const SettingsModal: React.FC<SettingsModalProps> = ({ settings, setSettings, onResetColors, onResetEmojis, onClose }) => {
+const SettingsModal: React.FC = () => {
+  const c = useClaudeTokens();
+  const dispatch = useAppDispatch();
+  const settings = useAppSelector((s) => s.debugger.settings);
   const [confirmAction, setConfirmAction] = useState<string | null>(null);
 
+  const handleClose = () => dispatch(setShowSettings(false));
+
   const handleChange = (key: keyof DebuggerSettings, value: DebuggerSettings[keyof DebuggerSettings]) => {
-    setSettings(prev => ({ ...prev, [key]: value }));
+    dispatch(updateSettings({ [key]: value }));
   };
 
   const handleConfirm = () => {
-    if (confirmAction === 'colors') onResetColors();
-    if (confirmAction === 'emojis') onResetEmojis();
+    if (confirmAction === 'colors') dispatch(resetColors());
+    if (confirmAction === 'emojis') dispatch(resetEmojis());
     setConfirmAction(null);
   };
 
+  const numberFieldSx = {
+    width: 80,
+    '& .MuiInputBase-root': {
+      height: 36,
+      bgcolor: c.bg.page,
+      borderRadius: `${c.radius.sm}px`,
+      fontFamily: c.font.mono,
+      fontSize: '0.85rem',
+    },
+    '& .MuiOutlinedInput-notchedOutline': {
+      borderColor: c.border.medium,
+    },
+    '& .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline': {
+      borderColor: c.border.strong,
+    },
+    '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
+      borderColor: c.accent.primary,
+    },
+    '& input': { color: c.text.primary, textAlign: 'center' as const },
+  };
+
+  const accentSwitchSx = {
+    '& .MuiSwitch-switchBase.Mui-checked': { color: c.accent.primary },
+    '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { bgcolor: c.accent.primary },
+  };
+
   return (
-    <div className="settings-overlay" onClick={onClose}>
-      <div className="settings-modal" onClick={e => e.stopPropagation()}>
-        <div className="settings-header">
-          <h2>Settings</h2>
-          <button className="settings-close" onClick={onClose} aria-label="Close settings">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
-        </div>
+    <Dialog
+      open
+      onClose={handleClose}
+      PaperProps={{
+        sx: {
+          borderRadius: 4,
+          bgcolor: c.bg.surface,
+          border: `1px solid ${c.border.subtle}`,
+          boxShadow: c.shadow.lg,
+          maxWidth: 440,
+          width: '100%',
+          overflow: 'hidden',
+        },
+      }}
+      slotProps={{
+        backdrop: { sx: { backdropFilter: 'blur(4px)' } },
+      }}
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 28 }}
+      >
+        <DialogTitle
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            px: 3,
+            py: 2,
+            borderBottom: `1px solid ${c.border.subtle}`,
+          }}
+        >
+          <Typography sx={{ fontSize: '1rem', fontWeight: 600, fontFamily: c.font.serif }}>
+            Settings
+          </Typography>
+          <Tooltip title="Close">
+            <IconButton
+              onClick={handleClose}
+              size="small"
+              sx={{
+                color: c.text.tertiary,
+                '&:hover': { color: c.text.primary },
+                transition: c.transition,
+              }}
+            >
+              <CloseIcon sx={{ fontSize: 18 }} />
+            </IconButton>
+          </Tooltip>
+        </DialogTitle>
 
-        <div className="settings-body">
-          <div className="settings-group">
-            <label className="settings-label">
-              Pull Retry Count
-              <span className="settings-hint">Number of connection attempts on startup</span>
-            </label>
-            <NumberStepper
+        <DialogContent sx={{ px: 3, py: 2.5 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2.5 }}>
+            <Box>
+              <Typography sx={{ fontSize: '0.875rem', fontWeight: 500, color: c.text.primary }}>
+                Pull Retry Count
+              </Typography>
+              <Typography sx={{ fontSize: '0.75rem', color: c.text.tertiary, mt: 0.25 }}>
+                Number of connection attempts on startup
+              </Typography>
+            </Box>
+            <TextField
+              type="number"
               value={settings.pullRetryCount}
-              min={1}
-              max={20}
-              onChange={v => handleChange('pullRetryCount', v)}
+              onChange={(e) => {
+                const v = Math.max(1, Math.min(20, parseInt(e.target.value) || 1));
+                handleChange('pullRetryCount', v);
+              }}
+              size="small"
+              inputProps={{ min: 1, max: 20 }}
+              sx={numberFieldSx}
             />
-          </div>
+          </Box>
 
-          <div className="settings-group">
-            <label className="settings-label">
-              Pull Retry Delay (seconds)
-              <span className="settings-hint">Wait time between retry attempts</span>
-            </label>
-            <NumberStepper
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2.5 }}>
+            <Box>
+              <Typography sx={{ fontSize: '0.875rem', fontWeight: 500, color: c.text.primary }}>
+                Pull Retry Delay (seconds)
+              </Typography>
+              <Typography sx={{ fontSize: '0.75rem', color: c.text.tertiary, mt: 0.25 }}>
+                Wait time between retry attempts
+              </Typography>
+            </Box>
+            <TextField
+              type="number"
               value={settings.pullRetryDelay}
-              min={1}
-              max={30}
-              onChange={v => handleChange('pullRetryDelay', v)}
+              onChange={(e) => {
+                const v = Math.max(1, Math.min(30, parseInt(e.target.value) || 1));
+                handleChange('pullRetryDelay', v);
+              }}
+              size="small"
+              inputProps={{ min: 1, max: 30 }}
+              sx={numberFieldSx}
             />
-          </div>
+          </Box>
 
-          <div className="settings-group settings-toggle-group">
-            <label className="settings-label">
-              Auto Save
-              <span className="settings-hint">Automatically save changes after editing</span>
-            </label>
-            <button
-              className={`settings-toggle ${settings.autoSave ? 'active' : ''}`}
-              onClick={() => handleChange('autoSave', !settings.autoSave)}
-              aria-label="Toggle auto save"
-            >
-              <span className="settings-toggle-thumb" />
-            </button>
-          </div>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2.5 }}>
+            <Box>
+              <Typography sx={{ fontSize: '0.875rem', fontWeight: 500, color: c.text.primary }}>
+                Auto Save
+              </Typography>
+              <Typography sx={{ fontSize: '0.75rem', color: c.text.tertiary, mt: 0.25 }}>
+                Automatically save changes after editing
+              </Typography>
+            </Box>
+            <Switch
+              checked={settings.autoSave}
+              onChange={() => handleChange('autoSave', !settings.autoSave)}
+              size="small"
+              sx={accentSwitchSx}
+            />
+          </Box>
 
-          <div className="settings-group settings-toggle-group">
-            <label className="settings-label">
-              Expand All on Load
-              <span className="settings-hint">Start with all directories expanded when the tree loads</span>
-            </label>
-            <button
-              className={`settings-toggle ${settings.defaultExpanded ? 'active' : ''}`}
-              onClick={() => handleChange('defaultExpanded', !settings.defaultExpanded)}
-              aria-label="Toggle default expanded"
-            >
-              <span className="settings-toggle-thumb" />
-            </button>
-          </div>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2.5 }}>
+            <Box>
+              <Typography sx={{ fontSize: '0.875rem', fontWeight: 500, color: c.text.primary }}>
+                Expand All on Load
+              </Typography>
+              <Typography sx={{ fontSize: '0.75rem', color: c.text.tertiary, mt: 0.25 }}>
+                Start with all directories expanded when the tree loads
+              </Typography>
+            </Box>
+            <Switch
+              checked={settings.defaultExpanded}
+              onChange={() => handleChange('defaultExpanded', !settings.defaultExpanded)}
+              size="small"
+              sx={accentSwitchSx}
+            />
+          </Box>
 
-          <div className="settings-divider" />
+          <Box sx={{ height: '0.5px', bgcolor: c.border.medium, my: 2 }} />
 
-          <div className="settings-group">
-            <label className="settings-label">
+          <Box>
+            <Typography sx={{ fontSize: '0.875rem', fontWeight: 500, color: c.text.primary }}>
               Reset Defaults
-              <span className="settings-hint">Revert all nodes back to their default values and save</span>
-            </label>
-            {confirmAction ? (
-              <div className="settings-confirm">
-                <span className="settings-confirm-text">
-                  Reset all {confirmAction} to defaults?
-                </span>
-                <div className="settings-confirm-actions">
-                  <button
-                    className="settings-confirm-cancel"
-                    onClick={() => setConfirmAction(null)}
+            </Typography>
+            <Typography sx={{ fontSize: '0.75rem', color: c.text.tertiary, mt: 0.25, mb: 1.5 }}>
+              Revert all nodes back to their default values and save
+            </Typography>
+
+            <AnimatePresence mode="wait">
+              {confirmAction ? (
+                <motion.div
+                  key="confirm"
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.15 }}
+                >
+                  <Box
+                    sx={{
+                      p: 1.5,
+                      bgcolor: c.status.errorBg,
+                      borderRadius: `${c.radius.md}px`,
+                      border: `1px solid ${c.border.subtle}`,
+                    }}
                   >
-                    Cancel
-                  </button>
-                  <button
-                    className="settings-confirm-btn"
-                    onClick={handleConfirm}
-                  >
-                    Confirm
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="settings-actions-row">
-                <button className="settings-action-btn" onClick={() => setConfirmAction('colors')}>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="13.5" cy="6.5" r="2.5" />
-                    <path d="M17.08 9.08a7 7 0 1 1-10.64.42" />
-                    <path d="M12 2v4" />
-                  </svg>
-                  Reset Colors
-                </button>
-                <button className="settings-action-btn" onClick={() => setConfirmAction('emojis')}>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="10" />
-                    <path d="M8 14s1.5 2 4 2 4-2 4-2" />
-                    <line x1="9" y1="9" x2="9.01" y2="9" />
-                    <line x1="15" y1="9" x2="15.01" y2="9" />
-                  </svg>
-                  Reset Emojis
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
+                    <Typography sx={{ fontSize: '0.8rem', color: c.text.secondary, mb: 1 }}>
+                      Reset all {confirmAction} to defaults?
+                    </Typography>
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      <Button
+                        onClick={() => setConfirmAction(null)}
+                        size="small"
+                        sx={{
+                          textTransform: 'none',
+                          fontSize: '0.8rem',
+                          color: c.text.tertiary,
+                          '&:hover': { bgcolor: c.bg.elevated },
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={handleConfirm}
+                        size="small"
+                        sx={{
+                          textTransform: 'none',
+                          fontSize: '0.8rem',
+                          color: c.status.error,
+                          fontWeight: 600,
+                          '&:hover': { bgcolor: c.status.errorBg },
+                        }}
+                      >
+                        Confirm
+                      </Button>
+                    </Box>
+                  </Box>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="buttons"
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.15 }}
+                >
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Button
+                      onClick={() => setConfirmAction('colors')}
+                      startIcon={<PaletteIcon sx={{ fontSize: 16 }} />}
+                      size="small"
+                      sx={{
+                        textTransform: 'none',
+                        fontSize: '0.8rem',
+                        color: c.status.error,
+                        '&:hover': { bgcolor: c.status.errorBg },
+                        transition: c.transition,
+                      }}
+                    >
+                      Reset Colors
+                    </Button>
+                    <Button
+                      onClick={() => setConfirmAction('emojis')}
+                      startIcon={<EmojiEmotionsIcon sx={{ fontSize: 16 }} />}
+                      size="small"
+                      sx={{
+                        textTransform: 'none',
+                        fontSize: '0.8rem',
+                        color: c.status.error,
+                        '&:hover': { bgcolor: c.status.errorBg },
+                        transition: c.transition,
+                      }}
+                    >
+                      Reset Emojis
+                    </Button>
+                  </Box>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </Box>
+        </DialogContent>
+      </motion.div>
+    </Dialog>
   );
 };
 

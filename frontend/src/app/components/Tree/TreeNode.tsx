@@ -1,8 +1,18 @@
 import React, { useState, useRef, useEffect } from 'react';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import IconButton from '@mui/material/IconButton';
+import Switch from '@mui/material/Switch';
+import Tooltip from '@mui/material/Tooltip';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import InvertColorsIcon from '@mui/icons-material/InvertColors';
 import { HexColorPicker } from 'react-colorful';
+import { motion } from 'framer-motion';
+import { useClaudeTokens } from '@/shared/styles/ThemeContext';
+import { useAppDispatch, useAppSelector } from '@/shared/hooks';
+import { toggleExpanded, checkboxChange, colorChange } from '@/shared/state/debuggerSlice';
 import EmojiPicker from '@/app/components/EmojiPicker/EmojiPicker';
-import { TreeNodeData, ExpandedState } from '@/types';
-import './TreeNode.css';
+import { TreeNodeData } from '@/types';
 
 const PRESETS = ['#ffffff', '#c4633a', '#dc3c3c', '#e67e22', '#f1c40f', '#4aba6a', '#1abc9c', '#4a9aba', '#9b59b6'];
 
@@ -13,6 +23,7 @@ interface ColorPickerPopupProps {
 }
 
 const ColorPickerPopup: React.FC<ColorPickerPopupProps> = ({ color, onChange, onClose }) => {
+  const c = useClaudeTokens();
   const [hex, setHex] = useState(color);
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -20,9 +31,7 @@ const ColorPickerPopup: React.FC<ColorPickerPopupProps> = ({ color, onChange, on
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
-      if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
-        onClose();
-      }
+      if (panelRef.current && !panelRef.current.contains(e.target as Node)) onClose();
     };
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
@@ -30,137 +39,210 @@ const ColorPickerPopup: React.FC<ColorPickerPopupProps> = ({ color, onChange, on
 
   const handleHexInput = (val: string) => {
     setHex(val);
-    if (/^#[0-9a-fA-F]{6}$/.test(val)) {
-      onChange(val);
-    }
+    if (/^#[0-9a-fA-F]{6}$/.test(val)) onChange(val);
   };
 
   return (
-    <div className="color-picker-panel" ref={panelRef}>
-      <HexColorPicker color={color} onChange={onChange} />
-      <div className="color-picker-presets">
-        {PRESETS.map(c => (
-          <button
-            key={c}
-            className={`color-picker-swatch ${c === color ? 'active' : ''}`}
-            style={{ background: c }}
-            onClick={() => onChange(c)}
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      transition={{ duration: 0.15 }}
+    >
+      <Box
+        ref={panelRef}
+        sx={{
+          position: 'absolute',
+          top: 'calc(100% + 6px)',
+          left: 0,
+          zIndex: 1000,
+          p: 1.5,
+          bgcolor: c.bg.elevated,
+          border: `1px solid ${c.border.medium}`,
+          borderRadius: `${c.radius.xl}px`,
+          boxShadow: c.shadow.lg,
+          '& .react-colorful': { width: '100%', height: 150 },
+          '& .react-colorful__saturation': { borderRadius: `${c.radius.md}px ${c.radius.md}px 0 0` },
+          '& .react-colorful__hue': { borderRadius: `0 0 ${c.radius.md}px ${c.radius.md}px` },
+        }}
+      >
+        <HexColorPicker color={color} onChange={onChange} />
+        <Box sx={{ display: 'flex', gap: 0.5, mt: 1, flexWrap: 'wrap' }}>
+          {PRESETS.map((preset) => (
+            <Box
+              key={preset}
+              component="button"
+              onClick={() => onChange(preset)}
+              sx={{
+                width: 22,
+                height: 22,
+                borderRadius: `${c.radius.xs}px`,
+                bgcolor: preset,
+                border: preset === color ? `2px solid ${c.text.primary}` : `1px solid ${c.border.medium}`,
+                cursor: 'pointer',
+                p: 0,
+                transition: c.transition,
+                '&:hover': { transform: 'scale(1.15)' },
+              }}
+            />
+          ))}
+        </Box>
+        <Box sx={{ display: 'flex', alignItems: 'center', mt: 1, gap: 0.5 }}>
+          <Typography sx={{ fontSize: '0.75rem', color: c.text.tertiary }}>#</Typography>
+          <Box
+            component="input"
+            value={hex.replace('#', '')}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleHexInput('#' + e.target.value)}
+            maxLength={6}
+            spellCheck={false}
+            sx={{
+              flex: 1,
+              height: 28,
+              px: 0.75,
+              bgcolor: c.bg.surface,
+              border: `1px solid ${c.border.medium}`,
+              borderRadius: `${c.radius.sm}px`,
+              color: c.text.primary,
+              fontFamily: c.font.mono,
+              fontSize: '0.75rem',
+              outline: 'none',
+              '&:focus': { borderColor: c.accent.primary },
+            }}
           />
-        ))}
-      </div>
-      <div className="color-picker-hex-row">
-        <span className="color-picker-hash">#</span>
-        <input
-          className="color-picker-hex-input"
-          value={hex.replace('#', '')}
-          onChange={e => handleHexInput('#' + e.target.value)}
-          maxLength={6}
-          spellCheck={false}
-        />
-      </div>
-    </div>
+        </Box>
+      </Box>
+    </motion.div>
   );
 };
 
 interface TreeNodeProps {
   node: TreeNodeData;
   nodeId: string;
-  expanded: ExpandedState;
-  handleExpandClick: (id: string) => void;
-  handleCheckboxChange: (nodeId: string, checked: boolean) => void;
-  handleColorChange: (nodeId: string, color: string) => void;
-  handleEmojiChange: (nodeId: string, emoji: string) => void;
-  renderTree: (node: TreeNodeData, parentId: string) => React.ReactNode;
+  renderTree: (node: TreeNodeData, parentId: string, index: number) => React.ReactNode;
+  index: number;
 }
 
-const TreeNode: React.FC<TreeNodeProps> = ({
-  node,
-  nodeId,
-  expanded,
-  handleExpandClick,
-  handleCheckboxChange,
-  handleColorChange,
-  handleEmojiChange,
-  renderTree,
-}) => {
+const TreeNode: React.FC<TreeNodeProps> = ({ node, nodeId, renderTree, index }) => {
+  const c = useClaudeTokens();
+  const dispatch = useAppDispatch();
+  const isExpanded = useAppSelector((s) => s.debugger.expanded[nodeId]);
   const isDirectory = node.children && node.children.length > 0;
-  const isExpanded = expanded[nodeId];
   const [showColorPicker, setShowColorPicker] = useState(false);
 
   const handleRowClick = (e: React.MouseEvent) => {
     if (!isDirectory) return;
-    if ((e.target as HTMLElement).closest('.node-checkbox, .picker-wrapper, .color-trigger')) return;
-    handleExpandClick(nodeId);
+    if ((e.target as HTMLElement).closest('[data-no-row-click]')) return;
+    dispatch(toggleExpanded(nodeId));
   };
 
   return (
-    <div className="tree-node">
-      <div
-        className={`tree-node-row ${!node.is_toggled ? 'toggled-off' : ''} ${isDirectory ? 'is-expandable' : ''}`}
-        onClick={handleRowClick}
-      >
-        {isDirectory ? (
-          <span className={`expand-chevron ${isExpanded ? 'expanded' : ''}`}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="9 18 15 12 9 6" />
-            </svg>
-          </span>
-        ) : (
-          <span className="expand-spacer" />
-        )}
+    <motion.div
+      initial={{ opacity: 0, x: -8 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.2, delay: index * 0.02 }}
+    >
+      <Box sx={{ width: '100%' }}>
+        <Box
+          onClick={handleRowClick}
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            px: 1.25,
+            py: 0.625,
+            borderRadius: `${c.radius.md}px`,
+            cursor: isDirectory ? 'pointer' : 'default',
+            minHeight: 36,
+            transition: c.transition,
+            '&:hover': { bgcolor: c.bg.elevated },
+          }}
+        >
+          {isDirectory ? (
+            <ChevronRightIcon
+              sx={{
+                fontSize: 18,
+                color: c.text.tertiary,
+                transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
+                transition: 'transform 200ms ease',
+                flexShrink: 0,
+              }}
+            />
+          ) : (
+            <Box sx={{ width: 18, flexShrink: 0 }} />
+          )}
 
-        <EmojiPicker
-          defaultEmoji={node.emoji}
-          handleEmojiChange={(emoji: string) => handleEmojiChange(nodeId, emoji)}
-        />
+          <Box data-no-row-click>
+            <EmojiPicker
+              defaultEmoji={node.emoji}
+              handleEmojiChange={(emoji: string) =>
+                dispatch({ type: 'debugger/emojiChange', payload: { nodeId, emoji } })
+              }
+            />
+          </Box>
 
-        <div className="tree-node-name-area">
-          <span
-            className={`tree-node-name ${isDirectory ? 'is-directory' : ''}`}
-            style={{ color: node.color || 'var(--text-primary)' }}
-          >
-            {node.name}
-          </span>
-          <div className="color-trigger" onClick={e => e.stopPropagation()}>
-            <button
-              className="color-trigger-icon"
-              onClick={() => setShowColorPicker(prev => !prev)}
-              style={{ color: node.color || 'var(--text-tertiary)' }}
+          <Box sx={{ display: 'flex', alignItems: 'center', flex: 1, gap: 0.5, minWidth: 0 }}>
+            <Typography
+              sx={{
+                fontSize: '0.875rem',
+                fontFamily: c.font.mono,
+                fontWeight: isDirectory ? 600 : 400,
+                color: node.color || c.text.primary,
+                opacity: node.is_toggled ? 1 : 0.38,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                transition: c.transition,
+              }}
             >
-              <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
-                <path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z" />
-              </svg>
-            </button>
-            {showColorPicker && (
-              <ColorPickerPopup
-                color={node.color || '#ffffff'}
-                onChange={(color: string) => handleColorChange(nodeId, color)}
-                onClose={() => setShowColorPicker(false)}
-              />
-            )}
-          </div>
-        </div>
+              {node.name}
+            </Typography>
+            <Box data-no-row-click sx={{ position: 'relative' }}>
+              <Tooltip title="Change color">
+                <IconButton
+                  size="small"
+                  onClick={() => setShowColorPicker((prev) => !prev)}
+                  sx={{
+                    color: node.color || c.text.tertiary,
+                    opacity: 0,
+                    '.MuiBox-root:hover > &, &:focus': { opacity: 0.7 },
+                    '&:hover': { color: c.accent.primary, opacity: 1 },
+                    transition: c.transition,
+                    p: 0.25,
+                  }}
+                >
+                  <InvertColorsIcon sx={{ fontSize: 14 }} />
+                </IconButton>
+              </Tooltip>
+              {showColorPicker && (
+                <ColorPickerPopup
+                  color={node.color || '#ffffff'}
+                  onChange={(col: string) => dispatch(colorChange({ nodeId, color: col }))}
+                  onClose={() => setShowColorPicker(false)}
+                />
+              )}
+            </Box>
+          </Box>
 
-        <label className="node-checkbox" onClick={e => e.stopPropagation()}>
-          <input
-            type="checkbox"
-            checked={node.is_toggled}
-            onChange={(e) => handleCheckboxChange(nodeId, e.target.checked)}
-          />
-          <span className="node-checkbox-box">
-            <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="2.5 6 5 8.5 9.5 3.5" />
-            </svg>
-          </span>
-        </label>
-      </div>
+          <Box data-no-row-click>
+            <Switch
+              checked={node.is_toggled}
+              onChange={(e) => dispatch(checkboxChange({ nodeId, checked: e.target.checked }))}
+              size="small"
+              sx={{
+                '& .MuiSwitch-switchBase.Mui-checked': { color: c.accent.primary },
+                '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { bgcolor: c.accent.primary },
+              }}
+            />
+          </Box>
+        </Box>
 
-      {isDirectory && isExpanded && (
-        <div className="tree-node-children">
-          {node.children!.map((childNode) => renderTree(childNode, nodeId))}
-        </div>
-      )}
-    </div>
+        {isDirectory && isExpanded && (
+          <Box sx={{ pl: 3 }}>
+            {node.children!.map((childNode, childIndex) => renderTree(childNode, nodeId, childIndex))}
+          </Box>
+        )}
+      </Box>
+    </motion.div>
   );
 };
 

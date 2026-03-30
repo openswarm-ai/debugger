@@ -1,20 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
+import Box from '@mui/material/Box';
+import IconButton from '@mui/material/IconButton';
+import Popover from '@mui/material/Popover';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import { motion } from 'framer-motion';
+import { useClaudeTokens } from '@/shared/styles/ThemeContext';
 import { emojiList } from '@/shared/constants/emojis';
-import './EmojiPicker.css';
 
 const EMOJIS_PER_PAGE = 30;
-
-const ChevronLeft: React.FC = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="15 18 9 12 15 6" />
-  </svg>
-);
-
-const ChevronRight: React.FC = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="9 18 15 12 9 6" />
-  </svg>
-);
 
 interface EmojiPickerProps {
   defaultEmoji: string;
@@ -22,31 +16,19 @@ interface EmojiPickerProps {
 }
 
 const EmojiPicker: React.FC<EmojiPickerProps> = ({ defaultEmoji, handleEmojiChange }) => {
+  const c = useClaudeTokens();
   const folderNames = Object.keys(emojiList);
   const firstFolder = folderNames[0];
-  const [showPicker, setShowPicker] = useState(false);
+  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [selectedEmoji, setSelectedEmoji] = useState(defaultEmoji || '⚫');
   const [currentPage, setCurrentPage] = useState(0);
   const [currentFolder, setCurrentFolder] = useState(firstFolder);
-  const pickerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (defaultEmoji) {
-      setSelectedEmoji(defaultEmoji);
-    }
+    if (defaultEmoji) setSelectedEmoji(defaultEmoji);
   }, [defaultEmoji]);
 
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) {
-        setShowPicker(false);
-      }
-    };
-    if (showPicker) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showPicker]);
+  const open = Boolean(anchorEl);
 
   const handleFolderClick = (folderName: string) => {
     setCurrentFolder(folderName);
@@ -62,11 +44,9 @@ const EmojiPicker: React.FC<EmojiPickerProps> = ({ defaultEmoji, handleEmojiChan
 
   const handleEmojiClick = (emoji: string) => {
     setSelectedEmoji(emoji);
-    setShowPicker(false);
+    setAnchorEl(null);
     handleEmojiChange(emoji);
   };
-
-  const togglePicker = () => setShowPicker((prev) => !prev);
 
   const goToNextFolder = () => {
     const idx = folderNames.indexOf(currentFolder);
@@ -86,19 +66,13 @@ const EmojiPicker: React.FC<EmojiPickerProps> = ({ defaultEmoji, handleEmojiChan
   };
 
   const goToNextPage = () => {
-    if (currentPage < totalPages - 1) {
-      setCurrentPage(currentPage + 1);
-    } else {
-      goToNextFolder();
-    }
+    if (currentPage < totalPages - 1) setCurrentPage(currentPage + 1);
+    else goToNextFolder();
   };
 
   const goToPreviousPage = () => {
-    if (currentPage > 0) {
-      setCurrentPage(currentPage - 1);
-    } else {
-      goToPreviousFolder();
-    }
+    if (currentPage > 0) setCurrentPage(currentPage - 1);
+    else goToPreviousFolder();
   };
 
   const isLastFolder = currentFolder === folderNames[folderNames.length - 1];
@@ -107,47 +81,153 @@ const EmojiPicker: React.FC<EmojiPickerProps> = ({ defaultEmoji, handleEmojiChan
   const isFirstPageOfFirstFolder = isFirstFolder && currentPage === 0;
 
   return (
-    <div className="picker-wrapper" ref={pickerRef}>
-      <button onClick={togglePicker} className="picker-button">
+    <Box sx={{ position: 'relative', display: 'inline-flex', alignItems: 'center', flexShrink: 0 }}>
+      <IconButton
+        onClick={(e) => setAnchorEl(e.currentTarget)}
+        size="small"
+        sx={{
+          width: 28,
+          height: 28,
+          fontSize: '1rem',
+          borderRadius: `${c.radius.sm}px`,
+          fontFamily: '"Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif',
+          lineHeight: 1,
+          '&:hover': { bgcolor: `${c.accent.primary}0A` },
+          transition: c.transition,
+        }}
+      >
         {selectedEmoji}
-      </button>
+      </IconButton>
 
-      {showPicker && (
-        <div className="emoji-popup">
-          <div className="emoji-grid-section">
-            <button className="page-btn" onClick={goToPreviousPage} disabled={isFirstPageOfFirstFolder}>
-              <ChevronLeft />
-            </button>
-            <div className="emoji-grid">
-              {currentEmojis.map((emoji, index) => (
-                <span
-                  key={index}
-                  className="emoji-item"
-                  onClick={() => handleEmojiClick(emoji)}
-                >
-                  {emoji}
-                </span>
-              ))}
-            </div>
-            <button className="page-btn" onClick={goToNextPage} disabled={isLastPageOfLastFolder}>
-              <ChevronRight />
-            </button>
-          </div>
-
-          <div className="folder-tabs">
-            {folderNames.map((folderName, index) => (
-              <div
-                key={index}
-                className={`folder-tab ${folderName === currentFolder ? 'active' : ''}`}
-                onClick={() => handleFolderClick(folderName)}
+      <Popover
+        open={open}
+        anchorEl={anchorEl}
+        onClose={() => setAnchorEl(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+        slotProps={{
+          paper: {
+            sx: {
+              mt: 0.75,
+              bgcolor: c.bg.elevated,
+              border: `1px solid ${c.border.medium}`,
+              borderRadius: `${c.radius.xl}px`,
+              boxShadow: c.shadow.lg,
+              overflow: 'visible',
+            },
+          },
+        }}
+      >
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+        >
+          <Box sx={{ width: 310, p: 1.5 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <IconButton
+                size="small"
+                onClick={goToPreviousPage}
+                disabled={isFirstPageOfFirstFolder}
+                sx={{
+                  color: c.text.tertiary,
+                  '&:hover': { bgcolor: `${c.accent.primary}0A`, color: c.text.primary },
+                  '&:disabled': { opacity: 0.25 },
+                }}
               >
-                {emojiList[folderName][0]}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
+                <ChevronLeftIcon sx={{ fontSize: 14 }} />
+              </IconButton>
+
+              <Box
+                sx={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(6, 1fr)',
+                  gap: 0.25,
+                  height: 230,
+                  width: '100%',
+                  alignContent: 'start',
+                }}
+              >
+                {currentEmojis.map((emoji, idx) => (
+                  <Box
+                    key={idx}
+                    onClick={() => handleEmojiClick(emoji)}
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      aspectRatio: '1',
+                      fontSize: '1.25rem',
+                      cursor: 'pointer',
+                      borderRadius: `${c.radius.sm}px`,
+                      fontFamily: '"Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif',
+                      lineHeight: 1,
+                      userSelect: 'none',
+                      transition: 'background 0.1s ease, transform 0.1s ease',
+                      '&:hover': { bgcolor: `${c.accent.primary}0A`, transform: 'scale(1.15)' },
+                    }}
+                  >
+                    {emoji}
+                  </Box>
+                ))}
+              </Box>
+
+              <IconButton
+                size="small"
+                onClick={goToNextPage}
+                disabled={isLastPageOfLastFolder}
+                sx={{
+                  color: c.text.tertiary,
+                  '&:hover': { bgcolor: `${c.accent.primary}0A`, color: c.text.primary },
+                  '&:disabled': { opacity: 0.25 },
+                }}
+              >
+                <ChevronRightIcon sx={{ fontSize: 14 }} />
+              </IconButton>
+            </Box>
+
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 0.25,
+                mt: 1,
+                pt: 1,
+                borderTop: `1px solid ${c.border.subtle}`,
+              }}
+            >
+              {folderNames.map((folderName) => (
+                <Box
+                  key={folderName}
+                  onClick={() => handleFolderClick(folderName)}
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: 30,
+                    height: 28,
+                    fontSize: '0.95rem',
+                    borderRadius: `${c.radius.sm}px`,
+                    cursor: 'pointer',
+                    bgcolor: folderName === currentFolder ? c.accent.primary : 'transparent',
+                    fontFamily: '"Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif',
+                    lineHeight: 1,
+                    userSelect: 'none',
+                    transition: 'background 0.1s ease',
+                    '&:hover': {
+                      bgcolor: folderName === currentFolder ? c.accent.primary : `${c.accent.primary}0A`,
+                    },
+                  }}
+                >
+                  {emojiList[folderName][0]}
+                </Box>
+              ))}
+            </Box>
+          </Box>
+        </motion.div>
+      </Popover>
+    </Box>
   );
 };
 
