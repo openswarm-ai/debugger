@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useContext } from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
@@ -13,6 +13,7 @@ import { useAppDispatch, useAppSelector } from '@/shared/hooks';
 import { toggleExpanded, checkboxChange, colorChange } from '@/shared/state/debuggerSlice';
 import EmojiPicker from '@/app/components/EmojiPicker/EmojiPicker';
 import { TreeNodeData } from '@/types';
+import { TreeHoverContext } from '@/app/components/Tree/TreeHoverContext';
 
 const PRESETS = ['#ffffff', '#c4633a', '#dc3c3c', '#e67e22', '#f1c40f', '#4aba6a', '#1abc9c', '#4a9aba', '#9b59b6'];
 
@@ -135,6 +136,9 @@ const TreeNode: React.FC<TreeNodeProps> = ({ node, nodeId, renderTree, index, de
   const isDirectory = node.children && node.children.length > 0;
   const indeterminate = !!isDirectory && !node.is_toggled && hasAnyToggledDescendant(node);
   const [showColorPicker, setShowColorPicker] = useState(false);
+  const { hoveredNodeId, onNodeHover } = useContext(TreeHoverContext);
+  const showAccentBar = isDirectory && isExpanded && hoveredNodeId !== null &&
+    (hoveredNodeId === nodeId || nodeId.startsWith(hoveredNodeId + '/'));
 
   const handleRowClick = (e: React.MouseEvent) => {
     if (!isDirectory) return;
@@ -148,7 +152,10 @@ const TreeNode: React.FC<TreeNodeProps> = ({ node, nodeId, renderTree, index, de
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.2, delay: index * 0.02 }}
     >
-      <Box sx={{ width: '100%' }}>
+      <Box
+        sx={{ width: '100%' }}
+        onMouseOver={(e: React.MouseEvent) => { e.stopPropagation(); onNodeHover(isDirectory ? nodeId : null); }}
+      >
         <Box
           onClick={handleRowClick}
           sx={{
@@ -258,7 +265,21 @@ const TreeNode: React.FC<TreeNodeProps> = ({ node, nodeId, renderTree, index, de
         </Box>
 
         {isDirectory && isExpanded && (
-          <Box>
+          <Box sx={{ position: 'relative' }}>
+            <Box
+              sx={{
+                position: 'absolute',
+                left: `${50 + depth * 24}px`,
+                top: 0,
+                bottom: 0,
+                width: 2,
+                borderRadius: 1,
+                bgcolor: c.accent.primary,
+                opacity: showAccentBar ? 0.4 : 0,
+                transition: 'opacity 200ms ease',
+                pointerEvents: 'none',
+              }}
+            />
             {node.children!.map((childNode, childIndex) => renderTree(childNode, nodeId, childIndex, depth + 1))}
           </Box>
         )}
