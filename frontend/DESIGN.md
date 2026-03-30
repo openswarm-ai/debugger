@@ -71,22 +71,22 @@ const c = useClaudeTokens();
 
 ### 3.1 Color Palette
 
-| Token | Light | Dark | Usage |
-|-------|-------|------|-------|
-| `c.bg.page` | `#F5F5F0` warm cream | `#1a1918` deep charcoal | Full-page background |
-| `c.bg.surface` | `#FFFFFF` | `#262624` | Cards, panels, dialogs |
-| `c.bg.elevated` | `#FAF9F5` | `#30302E` | Hover states, raised elements |
-| `c.bg.secondary` | `#F5F4ED` | `#1f1e1b` | Sidebar, secondary panels |
-| `c.bg.inverse` | `#141413` | `#FAF9F5` | Tooltips, inverted elements |
-| `c.text.primary` | `#1a1a18` | `#FAF9F5` | Headings, body text |
-| `c.text.secondary` | `#3D3D3A` | `#C2C0B6` | Secondary labels |
-| `c.text.tertiary` | `#73726C` | `#9C9A92` | Placeholders, captions |
-| `c.text.muted` | `#6b6a68` | `#85837C` | De-emphasized text |
-| `c.text.ghost` | `rgba(115,114,108,0.5)` | `rgba(156,154,146,0.5)` | Timestamps, hints |
-| `c.accent.primary` | `#ae5630` burnt orange | `#c4633a` | Primary buttons, links, active indicators |
-| `c.accent.hover` | `#c4633a` | `#d47548` | Hover on accent |
-| `c.accent.pressed` | `#924828` | `#ae5630` | Active/pressed state |
-| `c.user.bubble` | `#DDD9CE` | `#393937` | User chat bubbles |
+| Token | Value | Usage |
+|-------|-------|-------|
+| `c.bg.page` | `#1a1918` deep charcoal | Full-page background |
+| `c.bg.surface` | `#262624` | Cards, panels, dialogs |
+| `c.bg.elevated` | `#30302E` | Hover states, raised elements |
+| `c.bg.secondary` | `#1f1e1b` | Sidebar, secondary panels |
+| `c.bg.inverse` | `#FAF9F5` | Tooltips, inverted elements |
+| `c.text.primary` | `#FAF9F5` | Headings, body text |
+| `c.text.secondary` | `#C2C0B6` | Secondary labels |
+| `c.text.tertiary` | `#9C9A92` | Placeholders, captions |
+| `c.text.muted` | `#85837C` | De-emphasized text |
+| `c.text.ghost` | `rgba(156,154,146,0.5)` | Timestamps, hints |
+| `c.accent.primary` | `#c4633a` burnt orange | Primary buttons, links, active indicators |
+| `c.accent.hover` | `#d47548` | Hover on accent |
+| `c.accent.pressed` | `#ae5630` | Active/pressed state |
+| `c.user.bubble` | `#393937` | User chat bubbles |
 
 ### 3.2 Borders
 
@@ -451,6 +451,5 @@ Before delivering any component, verify:
 9. Cards have subtle border + shadow + hover lift pattern
 10. Component has clear visual hierarchy — not everything equal weight
 11. At least one thoughtful design detail that elevates beyond generic
-12. Dark mode works correctly (tokens handle this automatically if used properly)
-13. MUI imports are from individual paths, not barrel
+12. MUI imports are from individual paths, not barrel
 14. `export default` at the bottom

@@ -75,6 +75,7 @@ const SettingsModal: React.FC = () => {
         sx: {
           borderRadius: 4,
           bgcolor: c.bg.surface,
+          backgroundImage: 'none',
           border: `1px solid ${c.border.subtle}`,
           boxShadow: c.shadow.lg,
           maxWidth: 440,

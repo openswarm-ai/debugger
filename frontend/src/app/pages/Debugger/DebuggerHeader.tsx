@@ -4,9 +4,7 @@ import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import SettingsIcon from '@mui/icons-material/Settings';
-import LightModeIcon from '@mui/icons-material/LightMode';
-import DarkModeIcon from '@mui/icons-material/DarkMode';
-import { useClaudeTokens, useThemeMode } from '@/shared/styles/ThemeContext';
+import { useClaudeTokens } from '@/shared/styles/ThemeContext';
 import { useAppDispatch } from '@/shared/hooks';
 import { setShowSettings } from '@/shared/state/debuggerSlice';
 import SyncSection from '@/app/components/SyncSection/SyncSection';
@@ -14,7 +12,6 @@ import SyncSection from '@/app/components/SyncSection/SyncSection';
 const DebuggerHeader: React.FC = () => {
   const c = useClaudeTokens();
   const dispatch = useAppDispatch();
-  const { mode, toggleMode } = useThemeMode();
 
   return (
     <Box
@@ -55,20 +52,6 @@ const DebuggerHeader: React.FC = () => {
 
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
         <SyncSection />
-
-        <Tooltip title={mode === 'light' ? 'Dark mode' : 'Light mode'}>
-          <IconButton
-            onClick={toggleMode}
-            size="small"
-            sx={{
-              color: c.text.tertiary,
-              '&:hover': { color: c.accent.primary, bgcolor: `${c.accent.primary}0A` },
-              transition: c.transition,
-            }}
-          >
-            {mode === 'light' ? <DarkModeIcon sx={{ fontSize: 18 }} /> : <LightModeIcon sx={{ fontSize: 18 }} />}
-          </IconButton>
-        </Tooltip>
 
         <Tooltip title="Settings">
           <IconButton
