@@ -60,6 +60,7 @@ function recomputeParentToggles(nodes: TreeNodeData[]): TreeNodeData[] {
 
 function treeFingerprint(nodes: TreeNodeData[] | null): string {
   if (!nodes) return '';
+  const normalized = recomputeParentToggles(nodes);
   const strip = (n: TreeNodeData): object => ({
     n: n.name,
     c: n.color,
@@ -67,7 +68,7 @@ function treeFingerprint(nodes: TreeNodeData[] | null): string {
     e: n.emoji,
     ...(n.children?.length ? { ch: n.children.map(strip) } : {}),
   });
-  return JSON.stringify(nodes.map(strip));
+  return JSON.stringify(normalized.map(strip));
 }
 
 function lightenColor(color: string, amt = 50): string {
