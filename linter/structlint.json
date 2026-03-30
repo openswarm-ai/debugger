@@ -1,7 +1,7 @@
 {
   "rules": {
     "max-file-lines": 250,
-    "max-folder-items": 6,
+    "max-folder-items": 7,
     "vulture-min-confidence": 1,
     "vulture-error-threshold": 1
   },

@@ -6,6 +6,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="${1:-$(dirname "$SCRIPT_DIR")}"
 
 YELLOW='\033[33m'
+CYAN='\033[36m'
 BOLD='\033[1m'
 RESET='\033[0m'
 
@@ -13,12 +14,29 @@ LINT_OUTPUT=$(python3 "$SCRIPT_DIR/structlint.py" --root "$ROOT_DIR" 2>&1)
 LINT_EXIT=$?
 
 if [ $LINT_EXIT -ne 0 ]; then
-    echo ""
-    echo -e "${YELLOW}${BOLD}[structlint] Violations found:${RESET}"
-    echo "$LINT_OUTPUT" | grep -v "^structlint:" | grep -v "^vulture:" | while IFS= read -r line; do
-        echo -e "${YELLOW}  $line${RESET}"
-    done
-    LINT_COUNT=$(echo "$LINT_OUTPUT" | grep -cE ':\s+(error|warning):\s+')
-    echo -e "${YELLOW}${BOLD}  ${LINT_COUNT} violation(s) — fix or add exceptions in linter/structlint.json${RESET}"
+    STRUCT_LINES=$(echo "$LINT_OUTPUT" | grep -v "^structlint:" | grep -v "^vulture:" | grep -v '\[vulture\]')
+    VULTURE_LINES=$(echo "$LINT_OUTPUT" | grep '\[vulture\]')
+
+    STRUCT_COUNT=$(echo "$STRUCT_LINES" | grep -cE ':\s+(error|warning):\s+')
+    VULTURE_COUNT=$(echo "$VULTURE_LINES" | grep -cE ':\s+(error|warning):\s+')
+
+    if [ "$STRUCT_COUNT" -gt 0 ]; then
+        echo ""
+        echo -e "${YELLOW}${BOLD}[structlint] Violations found:${RESET}"
+        echo "$STRUCT_LINES" | while IFS= read -r line; do
+            [ -n "$line" ] && echo -e "${YELLOW}  $line${RESET}"
+        done
+        echo -e "${YELLOW}${BOLD}  ${STRUCT_COUNT} violation(s) — fix or add exceptions in linter/structlint.json${RESET}"
+    fi
+
+    if [ "$VULTURE_COUNT" -gt 0 ]; then
+        echo ""
+        echo -e "${CYAN}${BOLD}[vulture] Dead code found:${RESET}"
+        echo "$VULTURE_LINES" | while IFS= read -r line; do
+            [ -n "$line" ] && echo -e "${CYAN}  $line${RESET}"
+        done
+        echo -e "${CYAN}${BOLD}  ${VULTURE_COUNT} finding(s) — fix or add to linter/vulture_whitelist.py${RESET}"
+    fi
+
     echo ""
 fi

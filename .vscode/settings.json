@@ -10,5 +10,6 @@
   ],
   "python.analysis.diagnosticSeverityOverrides": {
     "reportMissingTypeStubs": "none"
-  }
+  },
+  "eslint.workingDirectories": ["frontend"]
 }
