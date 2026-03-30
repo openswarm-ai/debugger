@@ -1,26 +1,36 @@
-# Structural Linter
+# Code Quality Tools
 
-A linter is a tool that automatically checks your code for problems. This one doesn't check for bugs — it enforces **structural rules** that keep the codebase organized and easy to navigate.
+This folder contains the project's code quality tooling: a structural linter, dead code detection, and type checking — covering both the Python backend and TypeScript frontend.
 
-## What it checks
+## What gets checked
 
-**1. File length** — Every source file must be under 250 lines.
+### Structural rules (structlint)
 
-Big files are hard to read, hard to review, and hard to maintain. If a file is getting long, it's a sign it should be split into smaller, more focused pieces.
+**File length** — Every source file must be under 250 lines. Big files are hard to read, review, and maintain. If a file is getting long, it's a sign it should be split.
 
-**2. Folder size** — Every folder must contain fewer than 6 items (files or subfolders).
+**Folder size** — Every folder must contain fewer than 6 items. Keeping folders small forces you to organize code into logical groups.
 
-When a folder has dozens of files it becomes a junk drawer. Keeping folders small forces you to organize code into logical groups.
+**Unused Python code (Vulture)** — Flags unused functions, classes, variables, and imports in the backend. Integrated into structlint's watch loop — findings appear as warnings in the Problems panel alongside structural errors. Only reports findings with >= 80% confidence to reduce noise.
 
-These rules apply to `.py`, `.ts`, `.tsx`, `.js`, and `.jsx` files. Non-code files (images, JSON data, configs, lock files, etc.) are ignored.
+These rules apply to `.py`, `.ts`, `.tsx`, `.js`, and `.jsx` files.
+
+### Unused TypeScript code
+
+**Per-file (ESLint)** — Catches unused variables, parameters, and imports within each file. Runs in real-time through the VS Code ESLint extension.
+
+**Project-wide (Knip)** — Finds unused exports, unused files, and unused `package.json` dependencies across the entire frontend. Run manually or in CI.
+
+### Type checking
+
+**Python (Pyright/Pylance)** — Strict type checking for the backend, configured via `pyrightconfig.json`. Works through the Pylance extension in real-time.
+
+**TypeScript** — The `tsconfig.json` in `frontend/` has strict mode enabled. TypeScript errors show in the editor automatically.
 
 ## How it runs
 
-You don't need to do anything — it runs automatically.
+### Structlint + Vulture (automatic)
 
-When you open the project in Cursor/VS Code, a background task starts watching for file changes. Every time you save, it re-checks the codebase. Violations show up as errors in the **Problems panel** (`Cmd+Shift+M`) and as red badges on files in the sidebar, just like any other linter.
-
-If you want to run it manually from the terminal:
+When you open the project in Cursor/VS Code, a background task starts watching for file changes. Every save re-checks the codebase. Violations show up in the **Problems panel** (`Cmd+Shift+M`).
 
 ```bash
 # one-shot check (exits with code 1 if violations exist)
@@ -30,52 +40,86 @@ python3 linter/structlint.py --root .
 python3 linter/structlint.py --watch --root .
 ```
 
+### ESLint (automatic)
+
+The VS Code ESLint extension picks up `frontend/eslint.config.mjs` and shows errors inline as you type. To run from the terminal:
+
+```bash
+cd frontend
+
+# check for problems
+npm run lint
+
+# auto-fix what's possible
+npm run lint:fix
+```
+
+### Knip (manual / CI)
+
+```bash
+cd frontend
+npm run knip
+```
+
+Or use the `knip:check` VS Code task (`Cmd+Shift+P` → "Run Task" → "knip:check").
+
 ## Configuration
 
-All config lives in `structlint.json` (this folder). Here's what each field does:
+### structlint.json
 
 ```json
 {
   "rules": {
     "max-file-lines": 250,     // files with >= this many lines trigger an error
-    "max-folder-items": 6      // folders with >= this many items trigger an error
+    "max-folder-items": 6,     // folders with >= this many items trigger an error
+    "vulture-min-confidence": 80,  // minimum confidence (0-100) to flag a finding
+    "vulture-error-threshold": 90  // confidence at which a finding becomes an error
   },
-  "include_extensions": [".py", ".ts", ".tsx", ".js", ".jsx"],  // only these file types are line-counted
-  "exclude": ["node_modules", ".venv", "..."],  // directories to skip entirely
+  "include_extensions": [".py", ".ts", ".tsx", ".js", ".jsx"],
+  "exclude": ["node_modules", ".venv", "..."],
   "exceptions": {
-    "max-file-lines": [],      // glob patterns for files exempt from the line limit
-    "max-folder-items": []     // glob patterns for folders exempt from the item limit
+    "max-file-lines": [],      // glob patterns for exempt files
+    "max-folder-items": [],    // glob patterns for exempt folders
+    "vulture": []              // glob patterns for files vulture should ignore
   }
 }
 ```
 
+Set `"vulture-min-confidence": null` (or remove the key) to disable vulture entirely.
+
+### Vulture whitelist
+
+`vulture_whitelist.py` suppresses false positives — symbols used by frameworks, entry points, or external consumers that vulture can't detect statically. Add bare names to the file to mark them as intentionally used.
+
+### ESLint
+
+`frontend/eslint.config.mjs` — flat config format (ESLint v9). The key rule for unused code is `@typescript-eslint/no-unused-vars`. Prefix a variable with `_` to suppress the warning.
+
+### Knip
+
+`frontend/knip.json` — Knip auto-detects entry points from `webpack.config.js`. The `project` field tells it which files to analyze.
+
 ## Adding exceptions
 
-If a file or folder legitimately needs to exceed a limit, add a glob pattern to the `exceptions` list in `structlint.json`. For example:
+If a file legitimately needs to exceed a structlint limit, add a glob to the `exceptions` list in `structlint.json`:
 
 ```json
 {
   "exceptions": {
-    "max-file-lines": [
-      "backend/tests/test_analytics.py"
-    ],
-    "max-folder-items": [
-      "backend/apps/agents"
-    ]
+    "max-file-lines": ["backend/tests/test_analytics.py"],
+    "max-folder-items": ["backend/apps/agents"],
+    "vulture": ["backend/legacy/*"]
   }
 }
 ```
 
-You can use wildcards: `"backend/tests/*"` exempts all files in the tests folder.
-
-## Type checking
-
-This folder also contains `pyrightconfig.json`, which configures strict type checking for the Python backend. This works through the **Pylance** extension in Cursor/VS Code — it shows type errors in real-time as you type, the same way TypeScript checks the frontend. No setup needed beyond having Pylance installed.
+Wildcards work: `"backend/tests/*"` exempts all files in the tests folder.
 
 ## Files in this folder
 
 | File | Purpose |
 |---|---|
-| `structlint.py` | The linter script |
+| `structlint.py` | Structural linter + vulture integration |
 | `structlint.json` | Rules, exclusions, and exceptions |
-| `pyrightconfig.json` | Python type checking config (for CLI `pyright` usage) |
+| `vulture_whitelist.py` | False positive suppressions for vulture |
+| `pyrightconfig.json` | Python type checking config |

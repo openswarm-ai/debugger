@@ -15,23 +15,42 @@
         "panel": "dedicated",
         "close": true
       },
-      "problemMatcher": {
-        "owner": "structlint",
-        "fileLocation": ["relative", "${workspaceFolder}"],
-        "pattern": {
-          "regexp": "^(.+):(\\d+):(\\d+):\\s+(error|warning):\\s+(.+)$",
-          "file": 1,
-          "line": 2,
-          "column": 3,
-          "severity": 4,
-          "message": 5
+      "problemMatcher": [
+        {
+          "owner": "structlint",
+          "fileLocation": ["relative", "${workspaceFolder}"],
+          "pattern": {
+            "regexp": "^(.+):(\\d+):(\\d+):\\s+(error|warning):\\s+(.+)$",
+            "file": 1,
+            "line": 2,
+            "column": 3,
+            "severity": 4,
+            "message": 5
+          },
+          "background": {
+            "activeOnStart": true,
+            "beginsPattern": "^structlint: checking\\.\\.\\.$",
+            "endsPattern": "^structlint: done\\."
+          }
         },
-        "background": {
-          "activeOnStart": true,
-          "beginsPattern": "^structlint: checking\\.\\.\\.$",
-          "endsPattern": "^structlint: done\\."
+        {
+          "owner": "vulture",
+          "fileLocation": ["relative", "${workspaceFolder}"],
+          "pattern": {
+            "regexp": "^(.+):(\\d+):(\\d+):\\s+(error|warning):\\s+(.+)$",
+            "file": 1,
+            "line": 2,
+            "column": 3,
+            "severity": 4,
+            "message": 5
+          },
+          "background": {
+            "activeOnStart": true,
+            "beginsPattern": "^vulture: checking\\.\\.\\.$",
+            "endsPattern": "^vulture: done\\."
+          }
         }
-      }
+      ]
     },
     {
       "label": "structlint:check",
@@ -49,6 +68,27 @@
           "severity": 4,
           "message": 5
         }
+      }
+    },
+    {
+      "label": "knip:check",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "knip"],
+      "options": {
+        "cwd": "${workspaceFolder}/frontend"
+      },
+      "problemMatcher": {
+        "owner": "knip",
+        "fileLocation": ["relative", "${workspaceFolder}/frontend"],
+        "pattern": {
+          "regexp": "^(.+):(\\d+):(\\d+)\\s+(.+)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "message": 4
+        },
+        "severity": "warning"
       }
     }
   ]

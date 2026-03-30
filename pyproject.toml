@@ -18,6 +18,9 @@ dependencies = [
 [project.scripts]
 debug-server = "backend.main:main"
 
+[project.optional-dependencies]
+dev = ["vulture"]
+
 [tool.setuptools]
 py-modules = ["debug"]
 packages = [

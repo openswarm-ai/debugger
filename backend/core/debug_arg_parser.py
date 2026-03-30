@@ -1,3 +1,4 @@
+x = "y"
 
 def is_fstring(arg_name):
     if not isinstance(arg_name, str):

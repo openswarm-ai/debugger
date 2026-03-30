@@ -16,6 +16,8 @@ trap cleanup EXIT
 BACKEND_URL="http://localhost:${BACKEND_PORT}/api/health/check"
 MAX_WAIT=60
 
+bash "$ROOT_DIR/linter/print_errors.sh" "$ROOT_DIR"
+
 echo "Starting backend..."
 echo ""
 

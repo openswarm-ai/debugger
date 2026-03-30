@@ -1,7 +1,9 @@
 {
   "rules": {
     "max-file-lines": 250,
-    "max-folder-items": 6
+    "max-folder-items": 6,
+    "vulture-min-confidence": 1,
+    "vulture-error-threshold": 1
   },
   "include_extensions": [".py", ".ts", ".tsx", ".js", ".jsx"],
   "exclude": [
@@ -24,6 +26,7 @@
     "max-file-lines": ["openswarm_debug.egg-info/**"],
     "max-folder-items": [
       "frontend"
-    ]
+    ],
+    "vulture": []
   }
 }

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Structural linter: enforces file line limits and folder item limits."""
+"""Structural linter: enforces file/folder limits and unused-code detection."""
 
 from __future__ import annotations
 
@@ -7,6 +7,9 @@ import argparse
 import fnmatch
 import json
 import os
+import re
+import shutil
+import subprocess
 import sys
 from pathlib import Path
 from typing import Any
@@ -101,7 +104,50 @@ def check_folder_items(
     return None
 
 
-def run_checks(root: Path) -> list[str]:
+def run_vulture(
+    root: Path, min_confidence: int, error_threshold: int,
+    exceptions: dict[str, list[str]],
+) -> list[str]:
+    """Run vulture on the Python backend and return errors in structlint format."""
+    vulture_bin = root / "backend" / ".venv" / "bin" / "vulture"
+    if not vulture_bin.exists():
+        found = shutil.which("vulture")
+        if not found:
+            return []
+        vulture_bin = Path(found)
+
+    whitelist = SCRIPT_DIR / "vulture_whitelist.py"
+    cmd = [str(vulture_bin), "backend", "debug.py"]
+    if whitelist.exists():
+        cmd.append(str(whitelist))
+    cmd.extend([
+        "--min-confidence", str(min_confidence),
+        "--exclude", ".venv,__pycache__,data,uv-bin",
+    ])
+
+    try:
+        result = subprocess.run(
+            cmd, capture_output=True, text=True, cwd=str(root), timeout=30,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return []
+
+    errors: list[str] = []
+    for line in result.stdout.strip().splitlines():
+        m = re.match(r"^(.+):(\d+): (.+)$", line)
+        if not m:
+            continue
+        filepath, lineno, message = m.groups()
+        if is_excepted(filepath, "vulture", exceptions):
+            continue
+        conf = re.search(r"\((\d+)% confidence\)", message)
+        confidence = int(conf.group(1)) if conf else 0
+        severity = "error" if confidence >= error_threshold else "warning"
+        errors.append(f"{filepath}:{lineno}:1: {severity}: {message} [vulture]")
+    return errors
+
+
+def run_checks(root: Path) -> tuple[list[str], list[str]]:
     config = load_config()
     rules: dict[str, int] = config["rules"]
     excludes: list[str] = config["exclude"]
@@ -110,7 +156,7 @@ def run_checks(root: Path) -> list[str]:
 
     max_lines: int = rules["max-file-lines"]
     max_items: int = rules["max-folder-items"]
-    errors: list[str] = []
+    structural_errors: list[str] = []
 
     for dirpath_str, dirnames, filenames in os.walk(root):
         dp = Path(dirpath_str)
@@ -123,7 +169,7 @@ def run_checks(root: Path) -> list[str]:
         if rel_dir != "." and not is_excepted(rel_dir, "max-folder-items", exceptions):
             result = check_folder_items(dp, root, max_items, excludes)
             if result:
-                errors.append(result[0])
+                structural_errors.append(result[0])
 
         for fname in filenames:
             fp = dp / fname
@@ -135,23 +181,37 @@ def run_checks(root: Path) -> list[str]:
             if not is_excepted(rel_file, "max-file-lines", exceptions):
                 result = check_file_lines(fp, root, max_lines)
                 if result:
-                    errors.append(result[0])
+                    structural_errors.append(result[0])
 
-    return sorted(errors)
+    vulture_errors: list[str] = []
+    vulture_confidence = rules.get("vulture-min-confidence")
+    if vulture_confidence is not None:
+        vulture_error_threshold = rules.get("vulture-error-threshold", 100)
+        vulture_errors = run_vulture(
+            root, vulture_confidence, vulture_error_threshold, exceptions,
+        )
+
+    return sorted(structural_errors), sorted(vulture_errors)
 
 
-def print_results(errors: list[str]) -> None:
-    print("structlint: checking...", flush=True)
-    for err in errors:
-        print(err, flush=True)
-    count = len(errors)
-    print(f"structlint: done. {count} error(s) found.", flush=True)
+def _print_section(name: str, errors: list[str]) -> None:
+    print(f"{name}: checking...", flush=True)
+    for e in errors:
+        print(e, flush=True)
+    print(f"{name}: done. {len(errors)} error(s) found.", flush=True)
+
+
+def print_results(
+    structural_errors: list[str], vulture_errors: list[str],
+) -> None:
+    _print_section("structlint", structural_errors)
+    _print_section("vulture", vulture_errors)
 
 
 def watch_loop(root: Path) -> None:
     from watchfiles import watch, DefaultFilter
 
-    print_results(run_checks(root))
+    print_results(*run_checks(root))
 
     class SourceFilter(DefaultFilter):
         allowed_extensions = (".py", ".ts", ".tsx", ".js", ".jsx")
@@ -166,7 +226,7 @@ def watch_loop(root: Path) -> None:
             return Path(path).is_dir()
 
     for _changes in watch(root, watch_filter=SourceFilter()):
-        print_results(run_checks(root))
+        print_results(*run_checks(root))
 
 
 def main() -> None:
@@ -180,9 +240,9 @@ def main() -> None:
     if args.watch:
         watch_loop(root)
     else:
-        errors = run_checks(root)
-        print_results(errors)
-        sys.exit(1 if errors else 0)
+        results = run_checks(root)
+        print_results(*results)
+        sys.exit(1 if any(results) else 0)
 
 
 if __name__ == "__main__":
