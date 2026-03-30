@@ -1,10 +1,10 @@
 import re
 import inspect
 import os
-from backend.log_config import log_config
-from backend.Debugleton import Debugleton
-from backend.color_adjuster import rgb_to_ansi, bold_and_italicize_text, hex_to_rgb
-from backend.debug_arg_parser import is_text, is_error
+from backend.core.log_config import log_config
+from backend.core.Debugleton import Debugleton
+from backend.core.color_adjuster import rgb_to_ansi, bold_and_italicize_text, hex_to_rgb
+from backend.core.debug_arg_parser import is_text, is_error
 
 def debug(*args, mode:str='debug', override_max_chars:bool=False):
     frame = inspect.currentframe().f_back

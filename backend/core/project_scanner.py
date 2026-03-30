@@ -2,9 +2,9 @@ import os
 import json
 import colorsys
 from typing import Union
-from backend.Directory import Directory
-from backend.DEFAULTS import DEFAULT_COLOR, DEFAULT_TOGGLED, DEFAULT_SET_MANUALLY, TOGGLE_FILE, DEFAULT_EMOJI, ROOT_DIR
-from backend.DebugFile import DebugFile
+from backend.core.Directory import Directory
+from backend.core.DEFAULTS import DEFAULT_COLOR, DEFAULT_TOGGLED, DEFAULT_SET_MANUALLY, TOGGLE_FILE, DEFAULT_EMOJI, ROOT_DIR
+from backend.core.DebugFile import DebugFile
 from collections import OrderedDict
 
 def merge_directories(json_dir: Directory, scanned_dir: Directory):

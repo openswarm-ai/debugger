@@ -5,7 +5,8 @@ import SettingsModal from './components/settings-modal/SettingsModal';
 import Tree from './components/tree/Tree';
 import './App.css';
 
-const API_BASE = 'http://127.0.0.1:6969';
+const BACKEND_PORT = process.env.REACT_APP_BACKEND_PORT || '8324';
+const API_BASE = `http://127.0.0.1:${BACKEND_PORT}/api/debugger`;
 
 const DEFAULT_SETTINGS = {
     pullRetryCount: 3,
@@ -91,7 +92,7 @@ const App = () => {
 
         setError(
             `Failed to connect to the backend after ${pullRetryCount} attempt${pullRetryCount !== 1 ? 's' : ''}. ` +
-            'Make sure the server is running on port 6969.'
+            `Make sure the server is running on port ${BACKEND_PORT}.`
         );
         setLoading(false);
         return false;

@@ -1,5 +1,5 @@
 import os
-from backend.DEFAULTS import ROOT_DIR
+from backend.core.DEFAULTS import ROOT_DIR
 
 def get_abspath(path: str):
     return os.path.join(ROOT_DIR, path)

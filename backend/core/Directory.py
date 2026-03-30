@@ -2,9 +2,9 @@ import os
 import json
 import colorsys
 from pathlib import Path
-from backend.DebugFile import DebugFile
-from backend.DEFAULTS import DEFAULT_COLOR, DEFAULT_TOGGLED, DEFAULT_SET_MANUALLY, DEFAULT_EMOJI
-from backend.path_mngr import get_abspath, get_root_rel_path
+from backend.core.DebugFile import DebugFile
+from backend.core.DEFAULTS import DEFAULT_COLOR, DEFAULT_TOGGLED, DEFAULT_SET_MANUALLY, DEFAULT_EMOJI
+from backend.core.path_mngr import get_abspath, get_root_rel_path
 
 class Directory:
     def __init__(self, path, color=DEFAULT_COLOR, is_toggled=DEFAULT_TOGGLED, 
@@ -32,7 +32,7 @@ class Directory:
     def get_ordered_abspaths_and_instances(self):
         # print("[get_ordered_abspaths]: START")
         curr_file_path = os.path.abspath(__file__)
-        root_dir = os.path.dirname(os.path.dirname(os.path.dirname(curr_file_path)))
+        root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(curr_file_path))))
         # print(f"[get_ordered_abspaths]: Curr path: {curr_file_path}")
         # print(f"[get_ordered_abspaths]:  Dir path: {root_dir}")
         def construct_ordered_abspaths(dir: Directory, ordered_abspaths: list):

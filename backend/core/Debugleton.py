@@ -1,14 +1,14 @@
 # Haik: sorry bout the filename
 
 import threading
-from backend.project_scanner import update_debug_toggles
-from backend.Directory import Directory
-from backend.DebugFile import DebugFile
-from backend.DEFAULTS import DEFAULT_COLOR, DEFAULT_TOGGLED, DEFAULT_EMOJI
+from backend.core.project_scanner import update_debug_toggles
+from backend.core.Directory import Directory
+from backend.core.DebugFile import DebugFile
+from backend.core.DEFAULTS import DEFAULT_COLOR, DEFAULT_TOGGLED, DEFAULT_EMOJI
 import os
 import time
 
-NEEDS_RESYNC_FILE = os.path.join(os.path.dirname(__file__), 'needs_resync.txt')
+NEEDS_RESYNC_FILE = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'needs_resync.txt')
 
 class Debugleton:
     _instance = None

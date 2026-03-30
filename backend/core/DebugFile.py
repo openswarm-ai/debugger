@@ -1,6 +1,6 @@
 import os
-from backend.File import File
-from backend.DEFAULTS import DEFAULT_COLOR, DEFAULT_TOGGLED, DEFAULT_SET_MANUALLY, DEFAULT_EMOJI
+from backend.core.File import File
+from backend.core.DEFAULTS import DEFAULT_COLOR, DEFAULT_TOGGLED, DEFAULT_SET_MANUALLY, DEFAULT_EMOJI
 
 class DebugFile(File):
     def __init__(self, filename, path, color=DEFAULT_COLOR, is_toggled=DEFAULT_TOGGLED, 

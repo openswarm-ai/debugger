@@ -1,5 +1,5 @@
 import logging
-from backend.log_mode import get_log_mode, set_log_mode
+from backend.core.log_mode import get_log_mode, set_log_mode
 
 class LogConfig:
     _instance = None

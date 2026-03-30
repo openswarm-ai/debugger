@@ -4,7 +4,8 @@ import axios from 'axios';
 const PullButton = ({ setProjectStructure }) => {
     const pullStructure = async () => {
         try {
-            const response = await axios.get('http://127.0.0.1:6969/pull_structure');
+            const BACKEND_PORT = process.env.REACT_APP_BACKEND_PORT || '8324';
+            const response = await axios.get(`http://127.0.0.1:${BACKEND_PORT}/api/debugger/pull_structure`);
             setProjectStructure(response.data);
         } catch (error) {
             console.error('Error fetching project structure:', error);
