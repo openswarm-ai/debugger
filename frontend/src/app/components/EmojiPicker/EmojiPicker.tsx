@@ -1,29 +1,34 @@
-import React, { useState, useEffect, useRef } from "react";
-import { emojiList } from '../../assets/emojis';
+import React, { useState, useEffect, useRef } from 'react';
+import { emojiList } from '@/shared/constants/emojis';
 import './EmojiPicker.css';
 
 const EMOJIS_PER_PAGE = 30;
 
-const ChevronLeft = () => (
+const ChevronLeft: React.FC = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <polyline points="15 18 9 12 15 6" />
   </svg>
 );
 
-const ChevronRight = () => (
+const ChevronRight: React.FC = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <polyline points="9 18 15 12 9 6" />
   </svg>
 );
 
-const EmojiPicker = ({ defaultEmoji, handleEmojiChange }) => {
+interface EmojiPickerProps {
+  defaultEmoji: string;
+  handleEmojiChange: (emoji: string) => void;
+}
+
+const EmojiPicker: React.FC<EmojiPickerProps> = ({ defaultEmoji, handleEmojiChange }) => {
   const folderNames = Object.keys(emojiList);
   const firstFolder = folderNames[0];
   const [showPicker, setShowPicker] = useState(false);
-  const [selectedEmoji, setSelectedEmoji] = useState(defaultEmoji || "⚫");
+  const [selectedEmoji, setSelectedEmoji] = useState(defaultEmoji || '⚫');
   const [currentPage, setCurrentPage] = useState(0);
   const [currentFolder, setCurrentFolder] = useState(firstFolder);
-  const pickerRef = useRef(null);
+  const pickerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (defaultEmoji) {
@@ -32,8 +37,8 @@ const EmojiPicker = ({ defaultEmoji, handleEmojiChange }) => {
   }, [defaultEmoji]);
 
   useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (pickerRef.current && !pickerRef.current.contains(e.target)) {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) {
         setShowPicker(false);
       }
     };
@@ -43,7 +48,7 @@ const EmojiPicker = ({ defaultEmoji, handleEmojiChange }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showPicker]);
 
-  const handleFolderClick = (folderName) => {
+  const handleFolderClick = (folderName: string) => {
     setCurrentFolder(folderName);
     setCurrentPage(0);
   };
@@ -52,10 +57,10 @@ const EmojiPicker = ({ defaultEmoji, handleEmojiChange }) => {
   const totalPages = Math.ceil(emojis.length / EMOJIS_PER_PAGE);
   const currentEmojis = emojis.slice(
     currentPage * EMOJIS_PER_PAGE,
-    (currentPage + 1) * EMOJIS_PER_PAGE
+    (currentPage + 1) * EMOJIS_PER_PAGE,
   );
 
-  const handleEmojiClick = (emoji) => {
+  const handleEmojiClick = (emoji: string) => {
     setSelectedEmoji(emoji);
     setShowPicker(false);
     handleEmojiChange(emoji);

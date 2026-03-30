@@ -13,11 +13,10 @@ FRONTEND_DIR_ABSPATH="$(dirname "$RUN_FRONTEND_ABSPATH")"
 # --- Load port config ---
 source "$FRONTEND_DIR_ABSPATH/../ports.conf"
 export PORT="${FRONTEND_PORT:-3000}"
-export REACT_APP_BACKEND_PORT="${BACKEND_PORT:-8324}"
 
 echo "Installing dependencies..."
 cd "$FRONTEND_DIR_ABSPATH"
 npm install
 
 echo "Starting frontend..."
-npm run start
+npm run dev
