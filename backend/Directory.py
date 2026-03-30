@@ -183,6 +183,17 @@ class Directory:
             elif isinstance(child, Directory):
                 child.reset_colors()
 
+    def reset_emojis(self):
+        """
+        Resets the emoji of all DebugFile and Directory objects in this directory structure to the default emoji.
+        """
+        self.emoji = DEFAULT_EMOJI
+        for child in self.children:
+            if isinstance(child, DebugFile):
+                child.emoji = DEFAULT_EMOJI
+            elif isinstance(child, Directory):
+                child.reset_emojis()
+
 
 def lighten_color(color, amount=0.1):
     """

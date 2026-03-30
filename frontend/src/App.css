@@ -74,6 +74,19 @@
   opacity: 0.6;
 }
 
+.empty-state-icon.loading-pulse svg {
+  animation: spin 1s linear infinite;
+}
+
+.empty-state-icon.error-icon {
+  background: rgba(220, 60, 60, 0.12);
+  color: #dc3c3c;
+}
+
+.empty-state-icon.error-icon svg {
+  opacity: 0.9;
+}
+
 .empty-state h3 {
   font-size: 1rem;
   font-weight: 600;
@@ -86,4 +99,33 @@
   color: var(--text-tertiary);
   max-width: 320px;
   line-height: 1.5;
+}
+
+.retry-btn {
+  margin-top: 20px;
+  height: 36px;
+  padding: 0 20px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: var(--accent-primary);
+  color: white;
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s var(--ease), transform 0.1s var(--ease);
+}
+
+.retry-btn:hover {
+  background: var(--accent-hover);
+}
+
+.retry-btn:active {
+  transform: scale(0.97);
+  background: var(--accent-pressed);
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }

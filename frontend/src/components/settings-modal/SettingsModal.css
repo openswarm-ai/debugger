@@ -1,0 +1,338 @@
+.settings-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    animation: settingsFadeIn 0.15s ease;
+}
+
+.settings-modal {
+    width: 400px;
+    max-width: calc(100vw - 48px);
+    background: var(--bg-surface);
+    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+    animation: settingsSlideIn 0.2s var(--ease);
+}
+
+.settings-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.settings-header h2 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.settings-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    transition: background 0.15s var(--ease), color 0.15s var(--ease);
+}
+
+.settings-close:hover {
+    background: var(--node-hover);
+    color: var(--text-primary);
+}
+
+.settings-close svg {
+    width: 16px;
+    height: 16px;
+}
+
+.settings-body {
+    padding: 16px 20px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.settings-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.settings-toggle-group {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.settings-label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.settings-hint {
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: var(--text-tertiary);
+}
+
+/* Number stepper */
+
+.number-stepper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.number-stepper-input {
+    width: 100%;
+    height: 36px;
+    padding: 0 36px 0 12px;
+    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-md);
+    background: var(--bg-page);
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    outline: none;
+    transition: border-color 0.15s var(--ease);
+    -moz-appearance: textfield;
+}
+
+.number-stepper-input::-webkit-inner-spin-button,
+.number-stepper-input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.number-stepper-input:focus {
+    border-color: var(--accent-primary);
+}
+
+.number-stepper-controls {
+    position: absolute;
+    right: 1px;
+    top: 1px;
+    bottom: 1px;
+    display: flex;
+    flex-direction: column;
+    width: 28px;
+    border-left: 1px solid var(--border-medium);
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+    overflow: hidden;
+}
+
+.number-stepper-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: var(--bg-elevated);
+    color: var(--text-tertiary);
+    cursor: pointer;
+    padding: 0;
+    transition: background 0.1s var(--ease), color 0.1s var(--ease);
+}
+
+.number-stepper-btn:first-child {
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.number-stepper-btn:hover:not(:disabled) {
+    background: var(--node-active);
+    color: var(--text-primary);
+}
+
+.number-stepper-btn:active:not(:disabled) {
+    background: var(--accent-primary);
+    color: white;
+}
+
+.number-stepper-btn:disabled {
+    opacity: 0.25;
+    cursor: default;
+}
+
+.number-stepper-btn svg {
+    width: 12px;
+    height: 12px;
+}
+
+/* Divider */
+
+.settings-divider {
+    height: 1px;
+    background: var(--border-subtle);
+    margin: 4px 0;
+}
+
+/* Action buttons */
+
+.settings-actions-row {
+    display: flex;
+    gap: 8px;
+}
+
+.settings-action-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 34px;
+    padding: 0 12px;
+    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-md);
+    background: var(--bg-page);
+    color: var(--text-secondary);
+    font-family: var(--font-sans);
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s var(--ease), color 0.15s var(--ease),
+        border-color 0.15s var(--ease);
+}
+
+.settings-action-btn:hover {
+    background: rgba(220, 60, 60, 0.08);
+    border-color: rgba(220, 60, 60, 0.3);
+    color: #dc3c3c;
+}
+
+.settings-action-btn:active {
+    background: rgba(220, 60, 60, 0.14);
+}
+
+.settings-action-btn svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+}
+
+/* Confirmation prompt */
+
+.settings-confirm {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 12px;
+    border: 1px solid rgba(220, 60, 60, 0.25);
+    border-radius: var(--radius-md);
+    background: rgba(220, 60, 60, 0.06);
+}
+
+.settings-confirm-text {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.settings-confirm-actions {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.settings-confirm-cancel,
+.settings-confirm-btn {
+    height: 28px;
+    padding: 0 12px;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s var(--ease), color 0.15s var(--ease);
+}
+
+.settings-confirm-cancel {
+    background: transparent;
+    color: var(--text-tertiary);
+}
+
+.settings-confirm-cancel:hover {
+    background: var(--node-hover);
+    color: var(--text-primary);
+}
+
+.settings-confirm-btn {
+    background: #dc3c3c;
+    color: white;
+}
+
+.settings-confirm-btn:hover {
+    background: #c43535;
+}
+
+.settings-confirm-btn:active {
+    background: #ab2e2e;
+}
+
+/* Toggle */
+
+.settings-toggle {
+    position: relative;
+    width: 40px;
+    height: 22px;
+    border: none;
+    border-radius: 11px;
+    background: var(--toggle-off);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.2s var(--ease);
+}
+
+.settings-toggle.active {
+    background: var(--toggle-on);
+}
+
+.settings-toggle-thumb {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: white;
+    transition: transform 0.2s var(--ease);
+}
+
+.settings-toggle.active .settings-toggle-thumb {
+    transform: translateX(18px);
+}
+
+@keyframes settingsFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes settingsSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}

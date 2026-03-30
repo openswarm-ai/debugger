@@ -20,15 +20,15 @@
   font-weight: 500;
   white-space: nowrap;
   transition: background 0.15s var(--ease), color 0.15s var(--ease),
-    transform 0.1s var(--ease);
+    transform 0.1s var(--ease), opacity 0.15s var(--ease);
 }
 
-.toolbar-btn:hover {
+.toolbar-btn:hover:not(:disabled) {
   background: var(--node-hover);
   color: var(--text-primary);
 }
 
-.toolbar-btn:active {
+.toolbar-btn:active:not(:disabled) {
   transform: scale(0.97);
 }
 
@@ -41,4 +41,26 @@
 .toolbar-btn:focus-visible {
   outline: 2px solid var(--accent-primary);
   outline-offset: 2px;
+}
+
+.toolbar-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.toolbar-btn-saving {
+  color: var(--text-tertiary);
+}
+
+.toolbar-btn-saving .save-spinner {
+  animation: toolbarSpin 0.8s linear infinite;
+}
+
+.toolbar-btn-saved {
+  color: #4aba6a;
+}
+
+@keyframes toolbarSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }

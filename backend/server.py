@@ -35,12 +35,18 @@ def api_reset_color():
     print("POST /reset_color")
     scanned_dir=update_debug_toggles(save_to_file=False)
     scanned_dir.reset_colors()
-    # print("RS: scanned_dir: ", scanned_dir)
     output = dir_to_output_format(scanned_dir)
     output = json.dumps(output, ensure_ascii=False, indent=4)
-    # print("RS: output: ", output)
     return Response(output, mimetype='application/json')
 
+@app.route('/reset_emoji', methods=['POST'])
+def api_reset_emoji():
+    print("POST /reset_emoji")
+    scanned_dir=update_debug_toggles(save_to_file=False)
+    scanned_dir.reset_emojis()
+    output = dir_to_output_format(scanned_dir)
+    output = json.dumps(output, ensure_ascii=False, indent=4)
+    return Response(output, mimetype='application/json')
 
 
 if __name__ == '__main__':

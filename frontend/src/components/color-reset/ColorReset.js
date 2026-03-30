@@ -1,24 +1,13 @@
 import React from 'react';
-import axios from 'axios';
 
-const ColorReset = ({ setProjectStructure }) => {
-    const resetColors = async () => {
-        try {
-            const response = await axios.post('http://127.0.0.1:6969/reset_color');
-            setProjectStructure(response.data);
-        } catch (error) {
-            console.error('Error resetting colors:', error);
-        }
-    };
-
+const ColorReset = ({ onRefresh, disabled }) => {
     return (
-        <button className="toolbar-btn" onClick={resetColors}>
+        <button className="toolbar-btn" onClick={onRefresh} disabled={disabled}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="13.5" cy="6.5" r="2.5" />
-                <path d="M17.08 9.08a7 7 0 1 1-10.64.42" />
-                <path d="M12 2v4" />
+                <polyline points="23 4 23 10 17 10" />
+                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
             </svg>
-            Reset
+            Refresh
         </button>
     );
 };
