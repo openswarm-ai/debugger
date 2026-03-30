@@ -115,6 +115,11 @@ const ColorPickerPopup: React.FC<ColorPickerPopupProps> = ({ color, onChange, on
   );
 };
 
+function hasAnyToggledDescendant(node: TreeNodeData): boolean {
+  if (!node.children) return false;
+  return node.children.some((c) => c.is_toggled || hasAnyToggledDescendant(c));
+}
+
 interface TreeNodeProps {
   node: TreeNodeData;
   nodeId: string;
@@ -128,6 +133,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({ node, nodeId, renderTree, index, de
   const dispatch = useAppDispatch();
   const isExpanded = useAppSelector((s) => s.debugger.expanded[nodeId]);
   const isDirectory = node.children && node.children.length > 0;
+  const indeterminate = !!isDirectory && !node.is_toggled && hasAnyToggledDescendant(node);
   const [showColorPicker, setShowColorPicker] = useState(false);
 
   const handleRowClick = (e: React.MouseEvent) => {
@@ -173,12 +179,14 @@ const TreeNode: React.FC<TreeNodeProps> = ({ node, nodeId, renderTree, index, de
           >
             <Checkbox
               checked={node.is_toggled}
+              indeterminate={indeterminate}
               onChange={(e) => dispatch(checkboxChange({ nodeId, checked: e.target.checked }))}
               size="small"
               sx={{
                 p: 0,
                 color: c.text.tertiary,
                 '&.Mui-checked': { color: c.accent.primary },
+                '&.MuiCheckbox-indeterminate': { color: c.accent.primary },
               }}
             />
           </Box>
@@ -199,7 +207,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({ node, nodeId, renderTree, index, de
                 fontFamily: c.font.mono,
                 fontWeight: isDirectory ? 600 : 400,
                 color: node.color || c.text.primary,
-                opacity: node.is_toggled ? 1 : 0.38,
+                opacity: (node.is_toggled || indeterminate) ? 1 : 0.38,
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',

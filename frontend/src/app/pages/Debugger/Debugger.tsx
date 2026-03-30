@@ -6,10 +6,14 @@ import CircularProgress from '@mui/material/CircularProgress';
 import { motion } from 'framer-motion';
 import { useClaudeTokens } from '@/shared/styles/ThemeContext';
 import { useAppDispatch, useAppSelector } from '@/shared/hooks';
-import { pullWithRetry, pushStructure, setSaveStatus, setShowSettings } from '@/shared/state/debuggerSlice';
+import { pullWithRetry, pushStructure, setSaveStatus, setShowSettings, expandAll, collapseAll } from '@/shared/state/debuggerSlice';
+import OpenInFullIcon from '@mui/icons-material/OpenInFull';
+import CloseFullscreenIcon from '@mui/icons-material/CloseFullscreen';
 import DebuggerHeader from '@/app/pages/Debugger/DebuggerHeader';
 import SettingsModal from '@/app/components/SettingsModal/SettingsModal';
 import Tree from '@/app/components/Tree/Tree';
+
+const expandCollapseAllIconSize = 11;
 
 const Debugger: React.FC = () => {
   const c = useClaudeTokens();
@@ -57,17 +61,70 @@ const Debugger: React.FC = () => {
         sx={{ maxWidth: 960, mx: 'auto', px: 3, pt: 3, pb: 6 }}
       >
         {projectStructure ? (
-          <Box
-            sx={{
-              bgcolor: c.bg.surface,
-              border: `1px solid ${c.border.subtle}`,
-              borderRadius: `${c.radius.xl}px`,
-              boxShadow: c.shadow.sm,
-              p: 1,
-            }}
-          >
-            <Tree />
-          </Box>
+          <>
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'flex-end',
+                alignItems: 'center',
+                gap: 0.75,
+                mb: 0.5,
+                opacity: 0.45,
+              }}
+            >
+              <Button
+                size="small"
+                startIcon={<OpenInFullIcon sx={{ width: expandCollapseAllIconSize, height: expandCollapseAllIconSize }} />}
+                onClick={() => dispatch(expandAll())}
+                sx={{
+                  textTransform: 'none',
+                  fontSize: '0.7rem',
+                  fontWeight: 400,
+                  color: c.text.tertiary,
+                  px: 0.75,
+                  py: 0,
+                  minWidth: 0,
+                  minHeight: 0,
+                  lineHeight: 1.4,
+                  '&:hover': { bgcolor: 'transparent', color: c.text.primary, opacity: 1 },
+                  transition: c.transition,
+                }}
+              >
+                Expand all
+              </Button>
+              <Button
+                size="small"
+                startIcon={<CloseFullscreenIcon sx={{ width: expandCollapseAllIconSize, height: expandCollapseAllIconSize }} />}
+                onClick={() => dispatch(collapseAll())}
+                sx={{
+                  textTransform: 'none',
+                  fontSize: '0.7rem',
+                  fontWeight: 400,
+                  color: c.text.tertiary,
+                  px: 0.75,
+                  py: 0,
+                  minWidth: 0,
+                  minHeight: 0,
+                  lineHeight: 1.4,
+                  '&:hover': { bgcolor: 'transparent', color: c.text.primary, opacity: 1 },
+                  transition: c.transition,
+                }}
+              >
+                Collapse all
+              </Button>
+            </Box>
+            <Box
+              sx={{
+                bgcolor: c.bg.surface,
+                border: `1px solid ${c.border.subtle}`,
+                borderRadius: `${c.radius.xl}px`,
+                boxShadow: c.shadow.sm,
+                p: 1,
+              }}
+            >
+              <Tree />
+            </Box>
+          </>
         ) : loading ? (
           <motion.div
             initial={{ opacity: 0, y: 12 }}

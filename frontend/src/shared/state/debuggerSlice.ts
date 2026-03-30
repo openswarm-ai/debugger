@@ -46,6 +46,18 @@ function updateChildrenToggle(children: TreeNodeData[] | undefined, checked: boo
   }));
 }
 
+function recomputeParentToggles(nodes: TreeNodeData[]): TreeNodeData[] {
+  return nodes.map((node) => {
+    if (!node.children?.length) return node;
+    const updated = recomputeParentToggles(node.children);
+    return {
+      ...node,
+      children: updated,
+      is_toggled: updated.every((c) => c.is_toggled),
+    };
+  });
+}
+
 function lightenColor(color: string, amt = 50): string {
   if (!color || typeof color !== 'string' || !color.startsWith('#') || color.length !== 7) {
     return '#ffffff';
@@ -165,36 +177,24 @@ const debuggerSlice = createSlice({
       if (!state.projectStructure) return;
       const pathParts = nodeId.split('/');
 
-      const updateNode = (
-        nodes: TreeNodeData[],
-        parts: string[],
-        check: boolean,
-        forceCheck = false,
-      ): TreeNodeData[] => {
-        return nodes.map((node) => {
-          if (node.name === parts[0]) {
-            const shouldCheck = check || forceCheck;
-            if (parts.length === 1) {
-              return {
-                ...node,
-                is_toggled: shouldCheck,
-                children: updateChildrenToggle(node.children, shouldCheck),
-              };
-            }
-            if (node.children) {
-              return {
-                ...node,
-                is_toggled: shouldCheck,
-                children: updateNode(node.children, parts.slice(1), check, shouldCheck),
-              };
-            }
-            return { ...node, is_toggled: shouldCheck };
+      const toggleTarget = (nodes: TreeNodeData[], parts: string[]): TreeNodeData[] =>
+        nodes.map((node) => {
+          if (node.name !== parts[0]) return node;
+          if (parts.length === 1) {
+            return {
+              ...node,
+              is_toggled: checked,
+              children: updateChildrenToggle(node.children, checked),
+            };
           }
-          return node;
+          return node.children
+            ? { ...node, children: toggleTarget(node.children, parts.slice(1)) }
+            : node;
         });
-      };
 
-      state.projectStructure = updateNode(state.projectStructure, pathParts, checked);
+      state.projectStructure = recomputeParentToggles(
+        toggleTarget(state.projectStructure, pathParts),
+      );
       state.dirty = true;
       state.saveStatus = 'idle';
     },
@@ -305,6 +305,16 @@ const debuggerSlice = createSlice({
     setShowSettings(state, action: PayloadAction<boolean>) {
       state.showSettings = action.payload;
     },
+
+    expandAll(state) {
+      if (state.projectStructure) {
+        state.expanded = buildExpandedState(state.projectStructure);
+      }
+    },
+
+    collapseAll(state) {
+      state.expanded = {};
+    },
   },
 
   extraReducers: (builder) => {
@@ -375,6 +385,8 @@ export const {
   markDirty,
   setSaveStatus,
   setShowSettings,
+  expandAll,
+  collapseAll,
 } = debuggerSlice.actions;
 
 export default debuggerSlice.reducer;
