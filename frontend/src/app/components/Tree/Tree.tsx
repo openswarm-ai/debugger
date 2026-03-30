@@ -9,7 +9,7 @@ const Tree: React.FC = () => {
   const c = useClaudeTokens();
   const projectStructure = useAppSelector((s) => s.debugger.projectStructure);
 
-  const renderTree = (node: TreeNodeData, parentId = '', index = 0) => {
+  const renderTree = (node: TreeNodeData, parentId = '', index = 0, depth = 0) => {
     const nodeId = parentId ? `${parentId}/${node.name}` : node.name;
     return (
       <TreeNode
@@ -18,6 +18,7 @@ const Tree: React.FC = () => {
         nodeId={nodeId}
         renderTree={renderTree}
         index={index}
+        depth={depth}
       />
     );
   };

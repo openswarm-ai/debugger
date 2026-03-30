@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
-import Switch from '@mui/material/Switch';
+import Checkbox from '@mui/material/Checkbox';
 import Tooltip from '@mui/material/Tooltip';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import InvertColorsIcon from '@mui/icons-material/InvertColors';
@@ -118,11 +118,12 @@ const ColorPickerPopup: React.FC<ColorPickerPopupProps> = ({ color, onChange, on
 interface TreeNodeProps {
   node: TreeNodeData;
   nodeId: string;
-  renderTree: (node: TreeNodeData, parentId: string, index: number) => React.ReactNode;
+  renderTree: (node: TreeNodeData, parentId: string, index: number, depth: number) => React.ReactNode;
   index: number;
+  depth: number;
 }
 
-const TreeNode: React.FC<TreeNodeProps> = ({ node, nodeId, renderTree, index }) => {
+const TreeNode: React.FC<TreeNodeProps> = ({ node, nodeId, renderTree, index, depth }) => {
   const c = useClaudeTokens();
   const dispatch = useAppDispatch();
   const isExpanded = useAppSelector((s) => s.debugger.expanded[nodeId]);
@@ -155,23 +156,34 @@ const TreeNode: React.FC<TreeNodeProps> = ({ node, nodeId, renderTree, index }) 
             minHeight: 36,
             transition: c.transition,
             '&:hover': { bgcolor: c.bg.elevated },
+            '&:hover .checkbox-reveal': { opacity: 1 },
+            '&:hover .color-picker-reveal': { opacity: 0.7 },
           }}
         >
-          {isDirectory ? (
-            <ChevronRightIcon
+          <Box
+            data-no-row-click
+            className="checkbox-reveal"
+            sx={{
+              opacity: node.is_toggled ? 0.3 : 0.6,
+              transition: c.transition,
+              flexShrink: 0,
+              display: 'flex',
+              alignItems: 'center',
+            }}
+          >
+            <Checkbox
+              checked={node.is_toggled}
+              onChange={(e) => dispatch(checkboxChange({ nodeId, checked: e.target.checked }))}
+              size="small"
               sx={{
-                fontSize: 18,
+                p: 0,
                 color: c.text.tertiary,
-                transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
-                transition: 'transform 200ms ease',
-                flexShrink: 0,
+                '&.Mui-checked': { color: c.accent.primary },
               }}
             />
-          ) : (
-            <Box sx={{ width: 18, flexShrink: 0 }} />
-          )}
+          </Box>
 
-          <Box data-no-row-click>
+          <Box data-no-row-click sx={{ ml: depth * 3 }}>
             <EmojiPicker
               defaultEmoji={node.emoji}
               handleEmojiChange={(emoji: string) =>
@@ -200,11 +212,12 @@ const TreeNode: React.FC<TreeNodeProps> = ({ node, nodeId, renderTree, index }) 
               <Tooltip title="Change color">
                 <IconButton
                   size="small"
+                  className="color-picker-reveal"
                   onClick={() => setShowColorPicker((prev) => !prev)}
                   sx={{
                     color: node.color || c.text.tertiary,
                     opacity: 0,
-                    '.MuiBox-root:hover > &, &:focus': { opacity: 0.7 },
+                    '&:focus': { opacity: 0.7 },
                     '&:hover': { color: c.accent.primary, opacity: 1 },
                     transition: c.transition,
                     p: 0.25,
@@ -223,22 +236,22 @@ const TreeNode: React.FC<TreeNodeProps> = ({ node, nodeId, renderTree, index }) 
             </Box>
           </Box>
 
-          <Box data-no-row-click>
-            <Switch
-              checked={node.is_toggled}
-              onChange={(e) => dispatch(checkboxChange({ nodeId, checked: e.target.checked }))}
-              size="small"
+          {isDirectory && (
+            <ChevronRightIcon
               sx={{
-                '& .MuiSwitch-switchBase.Mui-checked': { color: c.accent.primary },
-                '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { bgcolor: c.accent.primary },
+                fontSize: 18,
+                color: c.text.tertiary,
+                transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
+                transition: 'transform 200ms ease',
+                flexShrink: 0,
               }}
             />
-          </Box>
+          )}
         </Box>
 
         {isDirectory && isExpanded && (
-          <Box sx={{ pl: 3 }}>
-            {node.children!.map((childNode, childIndex) => renderTree(childNode, nodeId, childIndex))}
+          <Box>
+            {node.children!.map((childNode, childIndex) => renderTree(childNode, nodeId, childIndex, depth + 1))}
           </Box>
         )}
       </Box>
