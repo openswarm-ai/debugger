@@ -36,10 +36,9 @@ if [[ ! -d "$VENV_DIR" ]]; then
 fi
 source "$VENV_DIR/bin/activate"
 
-# --- Install Python dependencies ---
+# --- Install Python dependencies from pyproject.toml ---
 echo "Installing dependencies..."
-cd "$BACKEND_DIR_ABSPATH"
-pip install -r requirements.txt
+pip install -e "$BACKEND_DIR_ABSPATH/.."
 if [[ $? -ne 0 ]]; then
     echo "Error: Failed to install Python dependencies."
     exit 1

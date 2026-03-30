@@ -63,7 +63,6 @@ debugger/
 ├── backend/
 │   ├── __init__.py
 │   ├── main.py                         # FastAPI app composition, CORS, main()
-│   ├── requirements.txt                # fastapi[standard], typeguard
 │   ├── run.sh                          # Standalone backend runner
 │   ├── config/
 │   │   ├── __init__.py

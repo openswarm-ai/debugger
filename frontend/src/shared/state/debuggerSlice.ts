@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk, PayloadAction, current } from '@reduxjs/toolkit';
 import {
   PULL_STRUCTURE_URL,
   PUSH_STRUCTURE_URL,
@@ -58,6 +58,18 @@ function recomputeParentToggles(nodes: TreeNodeData[]): TreeNodeData[] {
   });
 }
 
+function treeFingerprint(nodes: TreeNodeData[] | null): string {
+  if (!nodes) return '';
+  const strip = (n: TreeNodeData): object => ({
+    n: n.name,
+    c: n.color,
+    t: n.is_toggled,
+    e: n.emoji,
+    ...(n.children?.length ? { ch: n.children.map(strip) } : {}),
+  });
+  return JSON.stringify(nodes.map(strip));
+}
+
 function lightenColor(color: string, amt = 50): string {
   if (!color || typeof color !== 'string' || !color.startsWith('#') || color.length !== 7) {
     return '#ffffff';
@@ -71,6 +83,7 @@ function lightenColor(color: string, amt = 50): string {
 
 interface DebuggerState {
   projectStructure: TreeNodeData[] | null;
+  lastSavedSnapshot: string;
   expanded: ExpandedState;
   error: string | null;
   loading: boolean;
@@ -82,6 +95,7 @@ interface DebuggerState {
 
 const initialState: DebuggerState = {
   projectStructure: null,
+  lastSavedSnapshot: '',
   expanded: {},
   error: null,
   loading: true,
@@ -195,7 +209,7 @@ const debuggerSlice = createSlice({
       state.projectStructure = recomputeParentToggles(
         toggleTarget(state.projectStructure, pathParts),
       );
-      state.dirty = true;
+      state.dirty = treeFingerprint(current(state).projectStructure) !== state.lastSavedSnapshot;
       state.saveStatus = 'idle';
     },
 
@@ -245,7 +259,7 @@ const debuggerSlice = createSlice({
       };
 
       state.projectStructure = updateNode(state.projectStructure, pathParts, color, true);
-      state.dirty = true;
+      state.dirty = treeFingerprint(current(state).projectStructure) !== state.lastSavedSnapshot;
       state.saveStatus = 'idle';
     },
 
@@ -288,7 +302,7 @@ const debuggerSlice = createSlice({
       };
 
       state.projectStructure = updateNode(state.projectStructure, pathParts, emoji);
-      state.dirty = true;
+      state.dirty = treeFingerprint(current(state).projectStructure) !== state.lastSavedSnapshot;
       state.saveStatus = 'idle';
     },
 
@@ -329,8 +343,10 @@ const debuggerSlice = createSlice({
       })
       .addCase(pullWithRetry.fulfilled, (state, action) => {
         state.projectStructure = action.payload;
+        state.lastSavedSnapshot = treeFingerprint(action.payload);
         state.loading = false;
         state.error = null;
+        state.dirty = false;
         if (state.settings.defaultExpanded) {
           state.expanded = buildExpandedState(action.payload);
         } else {
@@ -347,6 +363,7 @@ const debuggerSlice = createSlice({
       })
       .addCase(pushStructure.fulfilled, (state, action) => {
         state.projectStructure = action.payload;
+        state.lastSavedSnapshot = treeFingerprint(action.payload);
         state.dirty = false;
         state.saveStatus = 'saved';
       })
@@ -359,6 +376,7 @@ const debuggerSlice = createSlice({
       })
       .addCase(resetColors.fulfilled, (state, action) => {
         state.projectStructure = action.payload;
+        state.lastSavedSnapshot = treeFingerprint(action.payload);
         state.dirty = false;
         state.saveStatus = 'saved';
       })
@@ -371,6 +389,7 @@ const debuggerSlice = createSlice({
       })
       .addCase(resetEmojis.fulfilled, (state, action) => {
         state.projectStructure = action.payload;
+        state.lastSavedSnapshot = treeFingerprint(action.payload);
         state.dirty = false;
         state.saveStatus = 'saved';
       })
