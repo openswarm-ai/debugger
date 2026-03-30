@@ -22,6 +22,5 @@ backend/debugger_gui_build/
 
 # IDE
 .idea/
-.vscode/
 *.swp
 *.swo
