@@ -6,18 +6,24 @@ const TreeNode = ({ node, nodeId, expanded, handleExpandClick, handleCheckboxCha
     const isDirectory = node.children && node.children.length > 0;
     const isExpanded = expanded[nodeId];
 
+    const handleRowClick = (e) => {
+        if (!isDirectory) return;
+        if (e.target.closest('.toggle-switch, .picker-wrapper, .color-dot-wrapper')) return;
+        handleExpandClick(nodeId);
+    };
+
     return (
         <div className="tree-node">
-            <div className={`tree-node-row ${!node.is_toggled ? 'toggled-off' : ''}`}>
+            <div
+                className={`tree-node-row ${!node.is_toggled ? 'toggled-off' : ''} ${isDirectory ? 'is-expandable' : ''}`}
+                onClick={handleRowClick}
+            >
                 {isDirectory ? (
-                    <button
-                        className={`expand-btn ${isExpanded ? 'expanded' : ''}`}
-                        onClick={() => handleExpandClick(nodeId)}
-                    >
+                    <span className={`expand-chevron ${isExpanded ? 'expanded' : ''}`}>
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <polyline points="9 18 15 12 9 6" />
                         </svg>
-                    </button>
+                    </span>
                 ) : (
                     <span className="expand-spacer" />
                 )}

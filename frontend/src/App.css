@@ -9,7 +9,6 @@
   padding: 0 24px;
   background: var(--bg-surface);
   border-bottom: 1px solid var(--border-subtle);
-  transition: background-color 0.3s var(--ease), border-color 0.3s var(--ease);
 }
 
 .app-title {
@@ -23,20 +22,9 @@
   user-select: none;
 }
 
-.app-title-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: var(--radius-md);
-  background: var(--accent-primary);
-  color: white;
-}
-
-.app-title-icon svg {
-  width: 16px;
-  height: 16px;
+.app-logo {
+  height: 26px;
+  width: auto;
 }
 
 .app-actions {
@@ -57,8 +45,6 @@
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-sm);
   padding: 8px;
-  transition: background-color 0.3s var(--ease), border-color 0.3s var(--ease),
-    box-shadow 0.3s var(--ease);
 }
 
 .empty-state {
@@ -100,38 +86,4 @@
   color: var(--text-tertiary);
   max-width: 320px;
   line-height: 1.5;
-}
-
-.theme-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  border: none;
-  border-radius: var(--radius-md);
-  background: transparent;
-  color: var(--text-tertiary);
-  cursor: pointer;
-  transition: background 0.15s var(--ease), color 0.15s var(--ease);
-  margin-left: 8px;
-  flex-shrink: 0;
-}
-
-.theme-toggle:hover {
-  background: var(--node-hover);
-  color: var(--text-primary);
-}
-
-.theme-toggle svg {
-  width: 18px;
-  height: 18px;
-}
-
-.header-divider {
-  width: 1px;
-  height: 24px;
-  background: var(--border-medium);
-  margin-left: 8px;
-  flex-shrink: 0;
 }

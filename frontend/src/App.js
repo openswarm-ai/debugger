@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import SyncSection from './components/sync-section/SyncSection';
 import Tree from './components/tree/Tree';
 import './App.css';
@@ -6,14 +6,6 @@ import './App.css';
 const App = () => {
     const [projectStructure, setProjectStructure] = useState(null);
     const [expanded, setExpanded] = useState({});
-    const [theme, setTheme] = useState(() => localStorage.getItem('debugger-theme') || 'dark');
-
-    useEffect(() => {
-        document.documentElement.setAttribute('data-theme', theme);
-        localStorage.setItem('debugger-theme', theme);
-    }, [theme]);
-
-    const toggleTheme = () => setTheme(t => t === 'dark' ? 'light' : 'dark');
 
     const handleExpandClick = (id) => {
         setExpanded((prevExpanded) => ({ ...prevExpanded, [id]: !prevExpanded[id] }));
@@ -144,27 +136,11 @@ const App = () => {
         <div className="app">
             <header className="app-header">
                 <div className="app-title">
-                    <span className="app-title-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M12 20h9" /><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" />
-                        </svg>
-                    </span>
+                    <img src="/logo.png" alt="Open Swarm" className="app-logo" />
                     Debugger
                 </div>
                 <div className="app-actions">
                     <SyncSection projectStructure={projectStructure} setProjectStructure={setProjectStructure} />
-                    <div className="header-divider" />
-                    <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
-                        {theme === 'dark' ? (
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <circle cx="12" cy="12" r="5" /><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
-                            </svg>
-                        ) : (
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
-                            </svg>
-                        )}
-                    </button>
                 </div>
             </header>
 
@@ -190,7 +166,7 @@ const App = () => {
                             </svg>
                         </div>
                         <h3>No configuration loaded</h3>
-                        <p>Pull your project's debug configuration using the download button in the toolbar above.</p>
+                        <p>Pull your project's debug configuration using the Pull button in the toolbar above.</p>
                     </div>
                 )}
             </main>

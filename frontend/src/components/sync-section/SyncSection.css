@@ -1,23 +1,26 @@
 .sync-toolbar {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 4px;
 }
 
 .toolbar-btn {
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
   border: none;
   border-radius: var(--radius-md);
   background: transparent;
   color: var(--text-tertiary);
   cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  font-weight: 500;
+  white-space: nowrap;
   transition: background 0.15s var(--ease), color 0.15s var(--ease),
     transform 0.1s var(--ease);
-  position: relative;
 }
 
 .toolbar-btn:hover {
@@ -26,17 +29,13 @@
 }
 
 .toolbar-btn:active {
-  transform: scale(0.95);
+  transform: scale(0.97);
 }
 
 .toolbar-btn svg {
-  width: 18px;
-  height: 18px;
-}
-
-.toolbar-btn.pull-active,
-.toolbar-btn.push-active {
-  color: var(--accent-primary);
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
 }
 
 .toolbar-btn:focus-visible {

@@ -8,7 +8,7 @@
   gap: 8px;
   padding: 5px 10px;
   border-radius: var(--radius-md);
-  transition: background 0.12s var(--ease), opacity 0.2s var(--ease);
+  transition: background 0.12s var(--ease);
   cursor: default;
   min-height: 36px;
 }
@@ -17,43 +17,55 @@
   background: var(--node-hover);
 }
 
-.tree-node-row.toggled-off {
-  opacity: 0.38;
+.tree-node-row.is-expandable {
+  cursor: pointer;
 }
 
-.tree-node-row.toggled-off:hover {
+/*
+ * Dimming for toggled-off rows: target each child individually
+ * so the emoji popup (inside .picker-wrapper) stays fully opaque.
+ */
+.tree-node-row.toggled-off > .expand-chevron,
+.tree-node-row.toggled-off > .expand-spacer,
+.tree-node-row.toggled-off > .toggle-switch,
+.tree-node-row.toggled-off > .tree-node-name,
+.tree-node-row.toggled-off > .color-dot-wrapper,
+.tree-node-row.toggled-off > .picker-wrapper > .picker-button {
+  opacity: 0.38;
+  transition: opacity 0.2s var(--ease);
+}
+
+.tree-node-row.toggled-off:hover > .expand-chevron,
+.tree-node-row.toggled-off:hover > .expand-spacer,
+.tree-node-row.toggled-off:hover > .toggle-switch,
+.tree-node-row.toggled-off:hover > .tree-node-name,
+.tree-node-row.toggled-off:hover > .color-dot-wrapper,
+.tree-node-row.toggled-off:hover > .picker-wrapper > .picker-button {
   opacity: 0.55;
 }
 
 /* Expand / collapse chevron */
 
-.expand-btn {
+.expand-chevron {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 22px;
   height: 22px;
-  border: none;
-  border-radius: var(--radius-xs);
-  background: transparent;
   color: var(--text-tertiary);
-  cursor: pointer;
-  padding: 0;
   flex-shrink: 0;
-  transition: transform 0.2s var(--ease), color 0.12s var(--ease),
-    background 0.12s var(--ease);
+  transition: transform 0.2s var(--ease), color 0.12s var(--ease);
 }
 
-.expand-btn:hover {
-  background: var(--node-active);
-  color: var(--text-primary);
+.tree-node-row:hover .expand-chevron {
+  color: var(--text-secondary);
 }
 
-.expand-btn.expanded {
+.expand-chevron.expanded {
   transform: rotate(90deg);
 }
 
-.expand-btn svg {
+.expand-chevron svg {
   width: 14px;
   height: 14px;
 }

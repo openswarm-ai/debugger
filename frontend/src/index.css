@@ -1,39 +1,4 @@
 :root {
-  --bg-page: #F5F5F0;
-  --bg-surface: #FFFFFF;
-  --bg-elevated: #FAF9F5;
-  --bg-secondary: #F5F4ED;
-  --text-primary: #1a1a18;
-  --text-secondary: #3D3D3A;
-  --text-tertiary: #73726C;
-  --text-muted: #6b6a68;
-  --text-inverse: #FAF9F5;
-  --accent-primary: #ae5630;
-  --accent-hover: #c4633a;
-  --accent-pressed: #924828;
-  --border-subtle: rgba(0, 0, 0, 0.06);
-  --border-medium: rgba(0, 0, 0, 0.1);
-  --border-strong: rgba(0, 0, 0, 0.18);
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.04);
-  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.08);
-  --radius-xs: 4px;
-  --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 10px;
-  --radius-xl: 12px;
-  --radius-full: 9999px;
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
-  --ease: cubic-bezier(0.165, 0.84, 0.44, 1);
-  --node-hover: rgba(0, 0, 0, 0.03);
-  --node-active: rgba(0, 0, 0, 0.06);
-  --toggle-off: rgba(0, 0, 0, 0.18);
-  --toggle-on: var(--accent-primary);
-  --picker-bg: var(--bg-surface);
-}
-
-[data-theme="dark"] {
   --bg-page: #1a1918;
   --bg-surface: #262624;
   --bg-elevated: #30302E;
@@ -52,6 +17,15 @@
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.2);
   --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.15);
   --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.25);
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 12px;
+  --radius-full: 9999px;
+  --font-sans: "Anthropic Sans", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+  --ease: cubic-bezier(0.165, 0.84, 0.44, 1);
   --node-hover: rgba(255, 255, 255, 0.04);
   --node-active: rgba(255, 255, 255, 0.07);
   --toggle-off: rgba(255, 255, 255, 0.2);
@@ -77,7 +51,6 @@ body {
   background-color: var(--bg-page);
   color: var(--text-primary);
   line-height: 1.5;
-  transition: background-color 0.3s var(--ease), color 0.3s var(--ease);
 }
 
 ::-webkit-scrollbar {
