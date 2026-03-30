@@ -12,6 +12,7 @@ import CloseFullscreenIcon from '@mui/icons-material/CloseFullscreen';
 import DebuggerHeader from '@/app/pages/Debugger/DebuggerHeader';
 import SettingsModal from '@/app/components/SettingsModal/SettingsModal';
 import Tree from '@/app/components/Tree/Tree';
+import SyncSection from '@/app/components/SyncSection/SyncSection';
 
 const expandCollapseAllIconSize = 11;
 
@@ -65,13 +66,22 @@ const Debugger: React.FC = () => {
             <Box
               sx={{
                 display: 'flex',
-                justifyContent: 'flex-end',
+                justifyContent: 'space-between',
                 alignItems: 'center',
-                gap: 0.75,
                 mb: 0.5,
-                opacity: 0.45,
               }}
             >
+              <Box sx={{ opacity: 0.45 }}>
+                <SyncSection />
+              </Box>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 0.75,
+                  opacity: 0.45,
+                }}
+              >
               <Button
                 size="small"
                 startIcon={<OpenInFullIcon sx={{ width: expandCollapseAllIconSize, height: expandCollapseAllIconSize }} />}
@@ -112,6 +122,7 @@ const Debugger: React.FC = () => {
               >
                 Collapse all
               </Button>
+              </Box>
             </Box>
             <Box
               sx={{

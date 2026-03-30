@@ -9,7 +9,10 @@ import Button from '@mui/material/Button';
 import Switch from '@mui/material/Switch';
 import TextField from '@mui/material/TextField';
 import Tooltip from '@mui/material/Tooltip';
+import InputAdornment from '@mui/material/InputAdornment';
 import CloseIcon from '@mui/icons-material/Close';
+import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import PaletteIcon from '@mui/icons-material/Palette';
 import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -41,6 +44,17 @@ const SettingsModal: React.FC = () => {
     setConfirmAction(null);
   };
 
+  const stepperBtnSx = {
+    p: 0,
+    minWidth: 0,
+    width: 18,
+    height: 14,
+    color: c.text.muted,
+    borderRadius: `${c.radius.xs}px`,
+    '&:hover': { color: c.text.primary, bgcolor: `${c.accent.primary}12` },
+    transition: 'color 0.15s, background-color 0.15s',
+  };
+
   const numberFieldSx = {
     width: 80,
     '& .MuiInputBase-root': {
@@ -49,6 +63,7 @@ const SettingsModal: React.FC = () => {
       borderRadius: `${c.radius.sm}px`,
       fontFamily: c.font.mono,
       fontSize: '0.85rem',
+      pr: 0.5,
     },
     '& .MuiOutlinedInput-notchedOutline': {
       borderColor: c.border.medium,
@@ -60,6 +75,11 @@ const SettingsModal: React.FC = () => {
       borderColor: c.accent.primary,
     },
     '& input': { color: c.text.primary, textAlign: 'center' as const },
+    '& input::-webkit-inner-spin-button, & input::-webkit-outer-spin-button': {
+      WebkitAppearance: 'none',
+      margin: 0,
+    },
+    '& input[type=number]': { MozAppearance: 'textfield' },
   };
 
   const accentSwitchSx = {
@@ -140,6 +160,30 @@ const SettingsModal: React.FC = () => {
               size="small"
               inputProps={{ min: 1, max: 20 }}
               sx={numberFieldSx}
+              slotProps={{
+                input: {
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
+                        <IconButton
+                          size="small"
+                          onClick={() => handleChange('pullRetryCount', Math.min(20, settings.pullRetryCount + 1))}
+                          sx={stepperBtnSx}
+                        >
+                          <KeyboardArrowUpIcon sx={{ fontSize: 14 }} />
+                        </IconButton>
+                        <IconButton
+                          size="small"
+                          onClick={() => handleChange('pullRetryCount', Math.max(1, settings.pullRetryCount - 1))}
+                          sx={stepperBtnSx}
+                        >
+                          <KeyboardArrowDownIcon sx={{ fontSize: 14 }} />
+                        </IconButton>
+                      </Box>
+                    </InputAdornment>
+                  ),
+                },
+              }}
             />
           </Box>
 
@@ -162,6 +206,30 @@ const SettingsModal: React.FC = () => {
               size="small"
               inputProps={{ min: 1, max: 30 }}
               sx={numberFieldSx}
+              slotProps={{
+                input: {
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
+                        <IconButton
+                          size="small"
+                          onClick={() => handleChange('pullRetryDelay', Math.min(30, settings.pullRetryDelay + 1))}
+                          sx={stepperBtnSx}
+                        >
+                          <KeyboardArrowUpIcon sx={{ fontSize: 14 }} />
+                        </IconButton>
+                        <IconButton
+                          size="small"
+                          onClick={() => handleChange('pullRetryDelay', Math.max(1, settings.pullRetryDelay - 1))}
+                          sx={stepperBtnSx}
+                        >
+                          <KeyboardArrowDownIcon sx={{ fontSize: 14 }} />
+                        </IconButton>
+                      </Box>
+                    </InputAdornment>
+                  ),
+                },
+              }}
             />
           </Box>
 
@@ -199,9 +267,15 @@ const SettingsModal: React.FC = () => {
             />
           </Box>
 
-          <Box sx={{ height: '0.5px', bgcolor: c.border.medium, my: 2 }} />
-
-          <Box>
+          <Box
+            sx={{
+              mt: 2.5,
+              p: 2,
+              bgcolor: c.bg.page,
+              borderRadius: `${c.radius.md}px`,
+              border: `1px solid ${c.border.subtle}`,
+            }}
+          >
             <Typography sx={{ fontSize: '0.875rem', fontWeight: 500, color: c.text.primary }}>
               Reset Defaults
             </Typography>
@@ -269,13 +343,19 @@ const SettingsModal: React.FC = () => {
                   <Box sx={{ display: 'flex', gap: 1 }}>
                     <Button
                       onClick={() => setConfirmAction('colors')}
+                      variant="outlined"
                       startIcon={<PaletteIcon sx={{ fontSize: 16 }} />}
                       size="small"
                       sx={{
                         textTransform: 'none',
                         fontSize: '0.8rem',
-                        color: c.status.error,
-                        '&:hover': { bgcolor: c.status.errorBg },
+                        color: c.text.secondary,
+                        borderColor: c.border.medium,
+                        '&:hover': {
+                          color: c.status.error,
+                          borderColor: c.status.error,
+                          bgcolor: c.status.errorBg,
+                        },
                         transition: c.transition,
                       }}
                     >
@@ -283,13 +363,19 @@ const SettingsModal: React.FC = () => {
                     </Button>
                     <Button
                       onClick={() => setConfirmAction('emojis')}
+                      variant="outlined"
                       startIcon={<EmojiEmotionsIcon sx={{ fontSize: 16 }} />}
                       size="small"
                       sx={{
                         textTransform: 'none',
                         fontSize: '0.8rem',
-                        color: c.status.error,
-                        '&:hover': { bgcolor: c.status.errorBg },
+                        color: c.text.secondary,
+                        borderColor: c.border.medium,
+                        '&:hover': {
+                          color: c.status.error,
+                          borderColor: c.status.error,
+                          bgcolor: c.status.errorBg,
+                        },
                         transition: c.transition,
                       }}
                     >

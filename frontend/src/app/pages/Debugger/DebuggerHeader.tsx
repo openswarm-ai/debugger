@@ -7,7 +7,6 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import { useClaudeTokens } from '@/shared/styles/ThemeContext';
 import { useAppDispatch } from '@/shared/hooks';
 import { setShowSettings } from '@/shared/state/debuggerSlice';
-import SyncSection from '@/app/components/SyncSection/SyncSection';
 
 const DebuggerHeader: React.FC = () => {
   const c = useClaudeTokens();
@@ -50,23 +49,19 @@ const DebuggerHeader: React.FC = () => {
         </Typography>
       </Box>
 
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-        <SyncSection />
-
-        <Tooltip title="Settings">
-          <IconButton
-            onClick={() => dispatch(setShowSettings(true))}
-            size="small"
-            sx={{
-              color: c.text.tertiary,
-              '&:hover': { color: c.accent.primary, bgcolor: `${c.accent.primary}0A` },
-              transition: c.transition,
-            }}
-          >
-            <SettingsIcon sx={{ fontSize: 18 }} />
-          </IconButton>
-        </Tooltip>
-      </Box>
+      <Tooltip title="Settings">
+        <IconButton
+          onClick={() => dispatch(setShowSettings(true))}
+          size="small"
+          sx={{
+            color: c.text.tertiary,
+            '&:hover': { color: c.accent.primary, bgcolor: `${c.accent.primary}0A` },
+            transition: c.transition,
+          }}
+        >
+          <SettingsIcon sx={{ fontSize: 18 }} />
+        </IconButton>
+      </Tooltip>
     </Box>
   );
 };
