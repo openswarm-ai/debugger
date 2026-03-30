@@ -1,16 +1,12 @@
 import React from 'react';
 import axios from 'axios';
-import pushImg from '../../assets/push.png'; // Adjust the path according to your project structure
-import './PushButton.css'; // Import the CSS file
 
 const PushButton = ({ projectStructure, setProjectStructure }) => {
     const pushStructure = async () => {
         try {
-            console.log("Pushing project structure to backend: ", projectStructure);
             const response = await axios.post('http://127.0.0.1:6969/push_structure', {
-                projectStructure // Include the projectStructure in the POST request body
+                projectStructure
             });
-            console.log('Project structure pushed:', response.data);
             setProjectStructure(response.data);
         } catch (error) {
             console.error('Error pushing project structure:', error);
@@ -18,15 +14,13 @@ const PushButton = ({ projectStructure, setProjectStructure }) => {
     };
 
     return (
-        <div className="push-button-container">
-            <div className="push-button-content">
-                <button className="push-button" onClick={pushStructure}>
-                    Push
-                </button>
-                <p>Push debugger config to backend</p>
-            </div>
-            <img src={pushImg} alt="Project Structure" className="push-button-img" />
-        </div>
+        <button className="toolbar-btn" onClick={pushStructure} title="Push config to backend">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+            </svg>
+        </button>
     );
 };
 

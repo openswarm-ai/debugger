@@ -1,129 +1,161 @@
-/* EmojiPicker.css */
-
 .picker-wrapper {
-    position: relative;
-    display: inline-block;
-  }
-  
-  .picker-button {
-    font-size: 1.5rem;
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
-  }
-  
-  .emoji-popup {
-    position: absolute;
-    top: 2.5rem;
-    left: 0;
-    width: fit-content;
-    padding: 10px;
-    border: 7px solid #cccccc46;
-    border-radius: 35px;
-    background-color: #181818ef;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    z-index: 1000;
-  }
-  
-  .folder-section {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-around;
-    height: fit-content;
-    width: 100%;
-  }
-  
-  .folder-item {
-    cursor: pointer;
-    padding: 10px;
-    text-align: left;
-    background-color: #00000000;
-    margin: 5px 0;
-    border-radius: 5px;
-    color: #ffffff;
-  }
-  
-  .folder-item:hover {
-    background-color: #ffffff35;
-  }
-  
-  .folder-item.active {
-    background-color: #ffffff15; /* Active color for the selected folder */
-  }
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
 
-  .folder-item.active:hover {
-    background-color: #ffffff35; /* Active color for the selected folder */
-  }
-  
-  
+.picker-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  font-size: 1rem;
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 0.12s var(--ease);
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+  line-height: 1;
+}
 
-  
-  .emoji-grid {
-    display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    gap: 10px;
-    height: 260px;
-    width: 330px;
-    font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
-  }
-  
-  .emoji-item {
-    cursor: pointer;
-    padding: 5px;
-    text-align: center;
-    height: fit-content;
-    border-radius: 5px;
-    font-size: 1.5rem;
-    font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
-  }
+.picker-button:hover {
+  background: var(--node-active);
+}
 
-  .emoji-item:hover {
-    background-color: #ffffff35;
-  }
-  
-  .pagination {
-    margin-top: 10px;
-    text-align: center;
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    align-items: center;
-    gap: 5px;
-  }
-  
-  .pagination button {
-    background-color: #00000000;
-    border: 0;
-    gap: 0;
-    width: 18px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
-    padding: 0 16px;
-    border-radius: 50px;
-    color: #ffffff;
-    height: fit-content;
-  }
+/* Popover */
 
-  .pagination button img {
-    height: 100px;
-    width: 30px;
-    object-fit: cover;
+.emoji-popup {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  width: 310px;
+  padding: 12px;
+  background: var(--picker-bg);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+  z-index: 1000;
+  animation: popoverIn 0.15s var(--ease);
+}
 
+@keyframes popoverIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
   }
-  
-  .pagination button:disabled {
-    cursor: default;
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
+}
 
-  .pagination button:hover {
-    background-color: #ffffff15;
-  }
+/* Emoji grid */
 
-  .selected-emoji-display {
-    margin-top: 20px;
-    font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
-  }
-  
+.emoji-grid-section {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.emoji-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 2px;
+  height: 230px;
+  width: 100%;
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+  align-content: start;
+}
+
+.emoji-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  aspect-ratio: 1;
+  font-size: 1.25rem;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: background 0.1s var(--ease), transform 0.1s var(--ease);
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+  line-height: 1;
+  user-select: none;
+}
+
+.emoji-item:hover {
+  background: var(--node-active);
+  transform: scale(1.15);
+}
+
+/* Pagination arrows */
+
+.page-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 0;
+  transition: background 0.12s var(--ease), color 0.12s var(--ease);
+}
+
+.page-btn:hover:not(:disabled) {
+  background: var(--node-active);
+  color: var(--text-primary);
+}
+
+.page-btn:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+
+.page-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Category tabs */
+
+.folder-tabs {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.folder-tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 28px;
+  font-size: 0.95rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  background: transparent;
+  transition: background 0.1s var(--ease);
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+  line-height: 1;
+  user-select: none;
+}
+
+.folder-tab:hover {
+  background: var(--node-active);
+}
+
+.folder-tab.active {
+  background: var(--accent-primary);
+  border-radius: var(--radius-sm);
+}

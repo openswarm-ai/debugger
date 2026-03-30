@@ -1,33 +1,53 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { emojiList } from '../../assets/emojis';
-import PrevPage from '../../assets/prev-page.png';
-import NextPage from '../../assets/next-page.png';
-import './EmojiPicker.css'; // Import CSS file
+import './EmojiPicker.css';
 
 const EMOJIS_PER_PAGE = 30;
 
-const EmojiPicker = ({ defaultEmoji, handleEmojiChange }) => {
-  const folderNames = Object.keys(emojiList); // Get all folder names
-  const firstFolder = folderNames[0]; // Get the first folder name
-  const [showPicker, setShowPicker] = useState(false);
-  const [selectedEmoji, setSelectedEmoji] = useState(defaultEmoji || "😀"); // Initialize with the default emoji from props or fallback to smiley
-  const [currentPage, setCurrentPage] = useState(0);
-  const [currentFolder, setCurrentFolder] = useState(firstFolder); // Initialize with first folder
+const ChevronLeft = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="15 18 9 12 15 6" />
+  </svg>
+);
 
-  // When defaultEmoji changes (e.g., from backend data), update selectedEmoji
+const ChevronRight = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="9 18 15 12 9 6" />
+  </svg>
+);
+
+const EmojiPicker = ({ defaultEmoji, handleEmojiChange }) => {
+  const folderNames = Object.keys(emojiList);
+  const firstFolder = folderNames[0];
+  const [showPicker, setShowPicker] = useState(false);
+  const [selectedEmoji, setSelectedEmoji] = useState(defaultEmoji || "⚫");
+  const [currentPage, setCurrentPage] = useState(0);
+  const [currentFolder, setCurrentFolder] = useState(firstFolder);
+  const pickerRef = useRef(null);
+
   useEffect(() => {
     if (defaultEmoji) {
       setSelectedEmoji(defaultEmoji);
     }
   }, [defaultEmoji]);
 
-  // Handle folder click
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (pickerRef.current && !pickerRef.current.contains(e.target)) {
+        setShowPicker(false);
+      }
+    };
+    if (showPicker) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showPicker]);
+
   const handleFolderClick = (folderName) => {
-    setCurrentFolder(folderName); // Set the current folder
-    setCurrentPage(0); // Reset page to 0 when switching folders
+    setCurrentFolder(folderName);
+    setCurrentPage(0);
   };
 
-  // Get the emojis for the selected folder
   const emojis = currentFolder ? emojiList[currentFolder] : [];
   const totalPages = Math.ceil(emojis.length / EMOJIS_PER_PAGE);
   const currentEmojis = emojis.slice(
@@ -37,31 +57,26 @@ const EmojiPicker = ({ defaultEmoji, handleEmojiChange }) => {
 
   const handleEmojiClick = (emoji) => {
     setSelectedEmoji(emoji);
-    setShowPicker(false); // Close the picker when an emoji is selected
-    handleEmojiChange(emoji); // Call the parent handler with the selected emoji
+    setShowPicker(false);
+    handleEmojiChange(emoji);
   };
 
-  const togglePicker = () => {
-    setShowPicker((prev) => !prev); // Toggle the picker visibility
-  };
+  const togglePicker = () => setShowPicker((prev) => !prev);
 
   const goToNextFolder = () => {
-    const currentIndex = folderNames.indexOf(currentFolder);
-    const nextFolderIndex = currentIndex + 1;
-    if (nextFolderIndex < folderNames.length) {
-      setCurrentFolder(folderNames[nextFolderIndex]);
-      setCurrentPage(0); // Reset to the first page of the next folder
+    const idx = folderNames.indexOf(currentFolder);
+    if (idx + 1 < folderNames.length) {
+      setCurrentFolder(folderNames[idx + 1]);
+      setCurrentPage(0);
     }
   };
 
   const goToPreviousFolder = () => {
-    const currentIndex = folderNames.indexOf(currentFolder);
-    const previousFolderIndex = currentIndex - 1;
-    if (previousFolderIndex >= 0) {
-      const previousFolder = folderNames[previousFolderIndex];
-      setCurrentFolder(previousFolder);
-      const lastPageOfPreviousFolder = Math.ceil(emojiList[previousFolder].length / EMOJIS_PER_PAGE) - 1;
-      setCurrentPage(lastPageOfPreviousFolder); // Set to the last page of the previous folder
+    const idx = folderNames.indexOf(currentFolder);
+    if (idx - 1 >= 0) {
+      const prev = folderNames[idx - 1];
+      setCurrentFolder(prev);
+      setCurrentPage(Math.ceil(emojiList[prev].length / EMOJIS_PER_PAGE) - 1);
     }
   };
 
@@ -87,45 +102,38 @@ const EmojiPicker = ({ defaultEmoji, handleEmojiChange }) => {
   const isFirstPageOfFirstFolder = isFirstFolder && currentPage === 0;
 
   return (
-    <div className="picker-wrapper">
-      {/* The emoji picker icon that changes when an emoji is selected */}
+    <div className="picker-wrapper" ref={pickerRef}>
       <button onClick={togglePicker} className="picker-button">
         {selectedEmoji}
       </button>
 
-      {/* Hoverable emoji picker */}
       {showPicker && (
         <div className="emoji-popup">
-          <div className="emoji-section">
-            <div className="pagination">
-              <button onClick={goToPreviousPage} disabled={isFirstPageOfFirstFolder}>
-                <img src={PrevPage} alt="Previous Page" />
-              </button>
-              <div className="emoji-grid">
-                {currentEmojis.map((emoji, index) => (
-                  <span
-                    key={index}
-                    className="emoji-item"
-                    onClick={() => handleEmojiClick(emoji)}
-                  >
-                    {emoji}
-                  </span>
-                ))}
-              </div>
-              <button
-                onClick={goToNextPage}
-                disabled={isLastPageOfLastFolder}
-              >
-                <img src={NextPage} alt="Next Page" />
-              </button>
+          <div className="emoji-grid-section">
+            <button className="page-btn" onClick={goToPreviousPage} disabled={isFirstPageOfFirstFolder}>
+              <ChevronLeft />
+            </button>
+            <div className="emoji-grid">
+              {currentEmojis.map((emoji, index) => (
+                <span
+                  key={index}
+                  className="emoji-item"
+                  onClick={() => handleEmojiClick(emoji)}
+                >
+                  {emoji}
+                </span>
+              ))}
             </div>
+            <button className="page-btn" onClick={goToNextPage} disabled={isLastPageOfLastFolder}>
+              <ChevronRight />
+            </button>
           </div>
 
-          <div className="folder-section">
+          <div className="folder-tabs">
             {folderNames.map((folderName, index) => (
               <div
                 key={index}
-                className={`folder-item ${folderName === currentFolder ? 'active' : ''}`}
+                className={`folder-tab ${folderName === currentFolder ? 'active' : ''}`}
                 onClick={() => handleFolderClick(folderName)}
               >
                 {emojiList[folderName][0]}

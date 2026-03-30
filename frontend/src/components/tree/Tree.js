@@ -2,7 +2,7 @@ import React from 'react';
 import TreeNode from '../tree_node/TreeNode';
 import './Tree.css';
 
-const Tree = ({ projectStructure, expanded, handleExpandClick, handleCheckboxChange, handleColorChange, handleEmojiChange}) => {
+const Tree = ({ projectStructure, expanded, handleExpandClick, handleCheckboxChange, handleColorChange, handleEmojiChange }) => {
     const renderTree = (node, parentId = '') => {
         const nodeId = parentId ? `${parentId}/${node.name}` : node.name;
 
@@ -21,10 +21,10 @@ const Tree = ({ projectStructure, expanded, handleExpandClick, handleCheckboxCha
         );
     };
 
-    if (!Array.isArray(projectStructure)) return null; // Ensure projectStructure is an array
+    if (!Array.isArray(projectStructure)) return null;
 
     return (
-        <div className='tree-container'>
+        <div className="tree-container">
             {projectStructure.map((node) => renderTree(node))}
         </div>
     );

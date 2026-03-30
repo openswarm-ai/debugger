@@ -1,52 +1,72 @@
-import './TreeNode.css';
 import React from 'react';
-import plusIcon from '../../assets/collapsed.png';
-import minusIcon from '../../assets/expanded.png';
-import colorIcon from '../../assets/color-picker.png'; // Import your custom color icon
 import EmojiPicker from '../emoji-picker/EmojiPicker';
+import './TreeNode.css';
 
-const TreeNode = ({ node, nodeId, expanded, handleExpandClick, handleCheckboxChange, handleColorChange, handleEmojiChange, renderTree }) => (
-    <div className="tree-node">
-        <div className="tree-node-content">
-            <div className="tree-node-content-main">
-                {node.children && node.children.length > 0 && (
-                    <button className="expand-button" onClick={() => handleExpandClick(nodeId)}>
-                        <img src={expanded[nodeId] ? minusIcon : plusIcon} alt="Expand/Collapse Icon" />
+const TreeNode = ({ node, nodeId, expanded, handleExpandClick, handleCheckboxChange, handleColorChange, handleEmojiChange, renderTree }) => {
+    const isDirectory = node.children && node.children.length > 0;
+    const isExpanded = expanded[nodeId];
+
+    return (
+        <div className="tree-node">
+            <div className={`tree-node-row ${!node.is_toggled ? 'toggled-off' : ''}`}>
+                {isDirectory ? (
+                    <button
+                        className={`expand-btn ${isExpanded ? 'expanded' : ''}`}
+                        onClick={() => handleExpandClick(nodeId)}
+                    >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="9 18 15 12 9 6" />
+                        </svg>
                     </button>
+                ) : (
+                    <span className="expand-spacer" />
                 )}
-                <input
-                    type="checkbox"
-                    checked={node.is_toggled}
-                    onChange={(e) => handleCheckboxChange(nodeId, e.target.checked)}
+
+                <label className="toggle-switch">
+                    <input
+                        type="checkbox"
+                        checked={node.is_toggled}
+                        onChange={(e) => handleCheckboxChange(nodeId, e.target.checked)}
+                    />
+                    <span className="toggle-track">
+                        <span className="toggle-thumb" />
+                    </span>
+                </label>
+
+                <EmojiPicker
+                    defaultEmoji={node.emoji}
+                    handleEmojiChange={(emoji) => handleEmojiChange(nodeId, emoji)}
                 />
-                {/* Pass node.emoji along with handleEmojiChange */}
-                <EmojiPicker 
-                    defaultEmoji={node.emoji} 
-                    handleEmojiChange={(emoji) => handleEmojiChange(nodeId, emoji)} 
-                />
-                <span className="tree-node-text" style={{ color: node.color || '#000000' }}>{node.name}</span>
-            </div>
-            <div className="tree-node-content-secondary">
-                <div className="color-picker-wrapper">
+
+                <span
+                    className={`tree-node-name ${isDirectory ? 'is-directory' : ''}`}
+                    style={{ color: node.color || 'var(--text-primary)' }}
+                >
+                    {node.name}
+                </span>
+
+                <div className="color-dot-wrapper">
                     <input
                         type="color"
-                        value={node.color || '#000000'}
+                        value={node.color || '#ffffff'}
                         onChange={(e) => handleColorChange(nodeId, e.target.value)}
-                        style={{ display: 'none' }} // Hide the default color input
-                        id={`color-picker-${nodeId}`}
+                        id={`color-${nodeId}`}
                     />
-                    <label htmlFor={`color-picker-${nodeId}`} className="color-picker-icon" style={{ backgroundColor: node.color || '#000000' }}>
-                        <img src={colorIcon} alt="Color Picker Icon" />
-                    </label>
+                    <label
+                        htmlFor={`color-${nodeId}`}
+                        className="color-dot"
+                        style={{ backgroundColor: node.color || '#ffffff' }}
+                    />
                 </div>
             </div>
+
+            {isDirectory && isExpanded && (
+                <div className="tree-node-children">
+                    {node.children.map((childNode) => renderTree(childNode, nodeId))}
+                </div>
+            )}
         </div>
-        {node.children && expanded[nodeId] && (
-            <div className="tree-node-children">
-                {node.children.map((childNode) => renderTree(childNode, nodeId))}
-            </div>
-        )}
-    </div>
-);
+    );
+};
 
 export default TreeNode;
