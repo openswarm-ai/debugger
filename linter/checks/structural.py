@@ -43,8 +43,8 @@ def check_file_lines(
     if count >= max_lines:
         rel = filepath.relative_to(root)
         msg = (
-            f"{rel}:1:1: error: File has {count} lines "
-            f"(limit {max_lines}) [max-file-lines]"
+            f"{rel}:1:1: error: "
+            f"[max-file-lines] File has {count} lines (limit {max_lines})"
         )
         return (msg, count)
     return None
@@ -65,8 +65,8 @@ def check_folder_items(
         anchor = _find_anchor_file(dirpath, root)
         rel = dirpath.relative_to(root)
         msg = (
-            f"{anchor}:1:1: error: Folder '{rel}' has {count} items "
-            f"(limit {max_items}) [max-folder-items]"
+            f"{anchor}:1:1: error: "
+            f"[max-folder-items] Folder '{rel}' has {count} items (limit {max_items})"
         )
         return (msg, count)
     return None
@@ -95,7 +95,7 @@ def check_nested_imports(filepath: Path, root: Path) -> list[str]:
                 name = ", ".join(a.name for a in node.names)
             errors.append(
                 f"{rel}:{node.lineno}:1: error: "
-                f"Nested import '{name}' [no-nested-imports]"
+                f"[no-nested-imports] Nested import '{name}'"
             )
         for child in ast.iter_child_nodes(node):
             _visit(child, in_function)

@@ -50,6 +50,6 @@ def run_knip(root: Path) -> list[str]:
                 col = item.get("col", 1)
                 errors.append(
                     f"{rel}:{line}:{col}: error: "
-                    f"{label} '{name}' [knip]"
+                    f"[knip] {label} '{name}'"
                 )
     return errors

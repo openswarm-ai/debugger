@@ -10,6 +10,8 @@ import { emojiList } from '@/shared/constants/emojis';
 
 const EMOJIS_PER_PAGE = 30;
 
+const x = 1;
+
 interface EmojiPickerProps {
   defaultEmoji: string;
   handleEmojiChange: (emoji: string) => void;

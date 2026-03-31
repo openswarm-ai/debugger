@@ -51,5 +51,5 @@ def run_vulture(
         conf = re.search(r"\((\d+)% confidence\)", message)
         confidence = int(conf.group(1)) if conf else 0
         severity = "error" if confidence >= error_threshold else "warning"
-        errors.append(f"{filepath}:{lineno}:1: {severity}: {message} [vulture]")
+        errors.append(f"{filepath}:{lineno}:1: {severity}: [vulture] {message}")
     return errors
