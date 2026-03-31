@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Structural linter: enforces file/folder limits and unused-code detection."""
+"""Unified linter: enforces file/folder limits, nested-import checks, and unused-code detection."""
 
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Any
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-CONFIG_FILE = SCRIPT_DIR / "structlint.json"
+CONFIG_FILE = SCRIPT_DIR / "config.json"
 
 
 def load_config() -> dict[str, Any]:
@@ -141,7 +141,7 @@ def run_vulture(
     root: Path, min_confidence: int, error_threshold: int,
     exceptions: dict[str, list[str]],
 ) -> list[str]:
-    """Run vulture on the Python backend and return errors in structlint format."""
+    """Run vulture on the Python backend and return errors."""
     vulture_bin = root / "backend" / ".venv" / "bin" / "vulture"
     if not vulture_bin.exists():
         found = shutil.which("vulture")
@@ -268,6 +268,7 @@ def run_knip(root: Path) -> list[str]:
 
 def run_checks(root: Path) -> tuple[list[str], list[str], list[str], list[str]]:
     config = load_config()
+    enabled: dict[str, bool] = config.get("enabled", {})
     rules: dict[str, int] = config["rules"]
     excludes: list[str] = config["exclude"]
     exceptions: dict[str, list[str]] = config["exceptions"]
@@ -278,6 +279,10 @@ def run_checks(root: Path) -> tuple[list[str], list[str], list[str], list[str]]:
     check_imports: bool = rules.get("no-nested-imports", False)
     structural_errors: list[str] = []
 
+    file_lines_on = enabled.get("max-file-lines", True)
+    folder_items_on = enabled.get("max-folder-items", True)
+    nested_imports_on = enabled.get("no-nested-imports", True)
+
     for dirpath_str, dirnames, filenames in os.walk(root):
         dp = Path(dirpath_str)
 
@@ -286,7 +291,7 @@ def run_checks(root: Path) -> tuple[list[str], list[str], list[str], list[str]]:
             continue
 
         rel_dir = str(dp.relative_to(root))
-        if rel_dir != "." and not is_excepted(rel_dir, "max-folder-items", exceptions):
+        if folder_items_on and rel_dir != "." and not is_excepted(rel_dir, "max-folder-items", exceptions):
             result = check_folder_items(dp, root, max_items, excludes)
             if result:
                 structural_errors.append(result[0])
@@ -298,23 +303,24 @@ def run_checks(root: Path) -> tuple[list[str], list[str], list[str], list[str]]:
             if is_excluded(fp, root, excludes):
                 continue
             rel_file = str(fp.relative_to(root))
-            if not is_excepted(rel_file, "max-file-lines", exceptions):
+            if file_lines_on and not is_excepted(rel_file, "max-file-lines", exceptions):
                 result = check_file_lines(fp, root, max_lines)
                 if result:
                     structural_errors.append(result[0])
-            if check_imports and not is_excepted(rel_file, "no-nested-imports", exceptions):
+            if nested_imports_on and check_imports and not is_excepted(rel_file, "no-nested-imports", exceptions):
                 structural_errors.extend(check_nested_imports(fp, root))
 
     vulture_errors: list[str] = []
-    vulture_confidence = rules.get("vulture-min-confidence")
-    if vulture_confidence is not None:
-        vulture_error_threshold = rules.get("vulture-error-threshold", 100)
-        vulture_errors = run_vulture(
-            root, vulture_confidence, vulture_error_threshold, exceptions,
-        )
+    if enabled.get("vulture", True):
+        vulture_confidence = rules.get("vulture-min-confidence")
+        if vulture_confidence is not None:
+            vulture_error_threshold = rules.get("vulture-error-threshold", 100)
+            vulture_errors = run_vulture(
+                root, vulture_confidence, vulture_error_threshold, exceptions,
+            )
 
-    eslint_errors = run_eslint(root)
-    knip_errors = run_knip(root)
+    eslint_errors = run_eslint(root) if enabled.get("eslint", True) else []
+    knip_errors = run_knip(root) if enabled.get("knip", True) else []
 
     return sorted(structural_errors), sorted(vulture_errors), sorted(eslint_errors), sorted(knip_errors)
 
@@ -330,7 +336,7 @@ def print_results(
     structural_errors: list[str], vulture_errors: list[str],
     eslint_errors: list[str], knip_errors: list[str],
 ) -> None:
-    _print_section("structlint", structural_errors)
+    _print_section("structural", structural_errors)
     _print_section("vulture", vulture_errors)
     _print_section("eslint", eslint_errors)
     _print_section("knip", knip_errors)
@@ -358,7 +364,7 @@ def watch_loop(root: Path) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Structural linter")
+    parser = argparse.ArgumentParser(description="Unified linter")
     parser.add_argument("--watch", action="store_true", help="Watch for changes")
     parser.add_argument("--root", type=str, default=".", help="Root directory")
     args = parser.parse_args()

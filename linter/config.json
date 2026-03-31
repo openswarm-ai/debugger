@@ -1,4 +1,12 @@
 {
+  "enabled": {
+    "max-file-lines": true,
+    "max-folder-items": true,
+    "no-nested-imports": true,
+    "vulture": true,
+    "eslint": true,
+    "knip": true
+  },
   "rules": {
     "max-file-lines": 250,
     "max-folder-items": 7,
@@ -24,11 +32,11 @@
     "frontend/src/assets"
   ],
   "exceptions": {
-    "max-file-lines": ["openswarm_debug.egg-info/**", "linter/structlint.py"],
+    "max-file-lines": ["openswarm_debug.egg-info/**", "linter/lint.py"],
     "max-folder-items": [
       "frontend"
     ],
-    "no-nested-imports": ["linter/structlint.py"],
+    "no-nested-imports": ["linter/lint.py"],
     "vulture": []
   }
 }

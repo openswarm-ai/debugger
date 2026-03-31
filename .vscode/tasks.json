@@ -2,10 +2,10 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "structlint:watch",
+      "label": "lint:watch",
       "type": "shell",
       "command": "python3",
-      "args": ["${workspaceFolder}/linter/structlint.py", "--watch", "--root", "${workspaceFolder}"],
+      "args": ["${workspaceFolder}/linter/lint.py", "--watch", "--root", "${workspaceFolder}"],
       "isBackground": true,
       "runOptions": {
         "runOn": "folderOpen"
@@ -17,7 +17,7 @@
       },
       "problemMatcher": [
         {
-          "owner": "structlint",
+          "owner": "structural",
           "fileLocation": ["relative", "${workspaceFolder}"],
           "pattern": {
             "regexp": "^(.+):(\\d+):(\\d+):\\s+(error|warning):\\s+(.+)$",
@@ -29,8 +29,8 @@
           },
           "background": {
             "activeOnStart": true,
-            "beginsPattern": "^structlint: checking\\.\\.\\.$",
-            "endsPattern": "^structlint: done\\."
+            "beginsPattern": "^structural: checking\\.\\.\\.$",
+            "endsPattern": "^structural: done\\."
           }
         },
         {
@@ -87,13 +87,13 @@
       ]
     },
     {
-      "label": "structlint:check",
+      "label": "lint:check",
       "type": "shell",
       "command": "python3",
-      "args": ["${workspaceFolder}/linter/structlint.py", "--root", "${workspaceFolder}"],
+      "args": ["${workspaceFolder}/linter/lint.py", "--root", "${workspaceFolder}"],
       "problemMatcher": [
         {
-          "owner": "structlint",
+          "owner": "structural",
           "fileLocation": ["relative", "${workspaceFolder}"],
           "pattern": {
             "regexp": "^(.+):(\\d+):(\\d+):\\s+(error|warning):\\s+(.+)$",

@@ -1,5 +1,5 @@
 #!/bin/bash
-# Print structlint violations to stdout with colored formatting.
+# Print lint violations to stdout with colored formatting.
 # Usage: bash linter/print_errors.sh [ROOT_DIR]
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -10,11 +10,11 @@ CYAN='\033[36m'
 BOLD='\033[1m'
 RESET='\033[0m'
 
-LINT_OUTPUT=$(python3 "$SCRIPT_DIR/structlint.py" --root "$ROOT_DIR" 2>&1)
+LINT_OUTPUT=$(python3 "$SCRIPT_DIR/lint.py" --root "$ROOT_DIR" 2>&1)
 LINT_EXIT=$?
 
 if [ $LINT_EXIT -ne 0 ]; then
-    STRUCT_LINES=$(echo "$LINT_OUTPUT" | grep -v "^structlint:" | grep -v "^vulture:" | grep -v "^eslint:" | grep -v "^knip:" | grep -v '\[vulture\]' | grep -v '\[eslint\]' | grep -v '\[knip\]')
+    STRUCT_LINES=$(echo "$LINT_OUTPUT" | grep -v "^structural:" | grep -v "^vulture:" | grep -v "^eslint:" | grep -v "^knip:" | grep -v '\[vulture\]' | grep -v '\[eslint\]' | grep -v '\[knip\]')
     VULTURE_LINES=$(echo "$LINT_OUTPUT" | grep '\[vulture\]')
     ESLINT_LINES=$(echo "$LINT_OUTPUT" | grep '\[eslint\]')
     KNIP_LINES=$(echo "$LINT_OUTPUT" | grep '\[knip\]')
@@ -26,11 +26,11 @@ if [ $LINT_EXIT -ne 0 ]; then
 
     if [ "$STRUCT_COUNT" -gt 0 ]; then
         echo ""
-        echo -e "${YELLOW}${BOLD}[structlint] Violations found:${RESET}"
+        echo -e "${YELLOW}${BOLD}[structural] Violations found:${RESET}"
         echo "$STRUCT_LINES" | while IFS= read -r line; do
             [ -n "$line" ] && echo -e "${YELLOW}  $line${RESET}"
         done
-        echo -e "${YELLOW}${BOLD}  ${STRUCT_COUNT} violation(s) — fix or add exceptions in linter/structlint.json${RESET}"
+        echo -e "${YELLOW}${BOLD}  ${STRUCT_COUNT} violation(s) — fix or add exceptions in linter/config.json${RESET}"
     fi
 
     if [ "$VULTURE_COUNT" -gt 0 ]; then

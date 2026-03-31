@@ -4,13 +4,13 @@ This folder contains the project's code quality tooling: a structural linter, de
 
 ## What gets checked
 
-### Structural rules (structlint)
+### Structural rules
 
 **File length** — Every source file must be under 250 lines. Big files are hard to read, review, and maintain. If a file is getting long, it's a sign it should be split.
 
 **Folder size** — Every folder must contain fewer than 6 items. Keeping folders small forces you to organize code into logical groups.
 
-**Unused Python code (Vulture)** — Flags unused functions, classes, variables, and imports in the backend. Integrated into structlint's watch loop — findings appear as warnings in the Problems panel alongside structural errors. Only reports findings with >= 80% confidence to reduce noise.
+**Unused Python code (Vulture)** — Flags unused functions, classes, variables, and imports in the backend. Integrated into the linter's watch loop — findings appear as warnings in the Problems panel alongside structural errors. Only reports findings with >= 80% confidence to reduce noise.
 
 These rules apply to `.py`, `.ts`, `.tsx`, `.js`, and `.jsx` files.
 
@@ -28,16 +28,16 @@ These rules apply to `.py`, `.ts`, `.tsx`, `.js`, and `.jsx` files.
 
 ## How it runs
 
-### Structlint + Vulture (automatic)
+### Linter watch (automatic)
 
 When you open the project in Cursor/VS Code, a background task starts watching for file changes. Every save re-checks the codebase. Violations show up in the **Problems panel** (`Cmd+Shift+M`).
 
 ```bash
 # one-shot check (exits with code 1 if violations exist)
-python3 linter/structlint.py --root .
+python3 linter/lint.py --root .
 
 # continuous watch mode
-python3 linter/structlint.py --watch --root .
+python3 linter/lint.py --watch --root .
 ```
 
 ### ESLint (automatic)
@@ -65,10 +65,18 @@ Or use the `knip:check` VS Code task (`Cmd+Shift+P` → "Run Task" → "knip:che
 
 ## Configuration
 
-### structlint.json
+### config.json
 
 ```json
 {
+  "enabled": {
+    "max-file-lines": true,    // toggle each check on/off
+    "max-folder-items": true,
+    "no-nested-imports": true,
+    "vulture": true,
+    "eslint": true,
+    "knip": true
+  },
   "rules": {
     "max-file-lines": 250,     // files with >= this many lines trigger an error
     "max-folder-items": 6,     // folders with >= this many items trigger an error
@@ -85,7 +93,7 @@ Or use the `knip:check` VS Code task (`Cmd+Shift+P` → "Run Task" → "knip:che
 }
 ```
 
-Set `"vulture-min-confidence": null` (or remove the key) to disable vulture entirely.
+Set any key in `"enabled"` to `false` to skip that check entirely. Missing keys default to `true`, so existing configs without the `"enabled"` section behave identically to before.
 
 ### Vulture whitelist
 
@@ -101,7 +109,7 @@ Set `"vulture-min-confidence": null` (or remove the key) to disable vulture enti
 
 ## Adding exceptions
 
-If a file legitimately needs to exceed a structlint limit, add a glob to the `exceptions` list in `structlint.json`:
+If a file legitimately needs to exceed a limit, add a glob to the `exceptions` list in `config.json`:
 
 ```json
 {
@@ -119,7 +127,7 @@ Wildcards work: `"backend/tests/*"` exempts all files in the tests folder.
 
 | File | Purpose |
 |---|---|
-| `structlint.py` | Structural linter + vulture integration |
-| `structlint.json` | Rules, exclusions, and exceptions |
+| `lint.py` | Unified linter (structural checks + vulture + eslint + knip) |
+| `config.json` | Enabled checks, rules, exclusions, and exceptions |
 | `vulture_whitelist.py` | False positive suppressions for vulture |
 | `pyrightconfig.json` | Python type checking config |
