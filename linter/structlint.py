@@ -185,7 +185,55 @@ def run_eslint(root: Path) -> list[str]:
     return errors
 
 
-def run_checks(root: Path) -> tuple[list[str], list[str], list[str]]:
+def run_knip(root: Path) -> list[str]:
+    """Run Knip on the TypeScript frontend and return errors."""
+    frontend_dir = root / "frontend"
+    knip_bin = frontend_dir / "node_modules" / ".bin" / "knip"
+    if not knip_bin.exists():
+        return []
+
+    cmd = [str(knip_bin), "--reporter", "json"]
+    try:
+        result = subprocess.run(
+            cmd, capture_output=True, text=True,
+            cwd=str(frontend_dir), timeout=60,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return []
+
+    try:
+        data = json.loads(result.stdout)
+    except (json.JSONDecodeError, ValueError):
+        return []
+
+    KIND_LABELS = {
+        "dependencies": "Unused dependency",
+        "devDependencies": "Unused devDependency",
+        "exports": "Unused export",
+        "types": "Unused exported type",
+        "unlisted": "Unlisted dependency",
+        "binaries": "Unused binary",
+        "files": "Unused file",
+        "duplicates": "Duplicate export",
+    }
+
+    errors: list[str] = []
+    for entry in data.get("issues", []):
+        filepath = entry.get("file", "")
+        rel = f"frontend/{filepath}"
+        for kind, label in KIND_LABELS.items():
+            for item in entry.get(kind, []):
+                name = item.get("name", "")
+                line = item.get("line", 1)
+                col = item.get("col", 1)
+                errors.append(
+                    f"{rel}:{line}:{col}: error: "
+                    f"{label} '{name}' [knip]"
+                )
+    return errors
+
+
+def run_checks(root: Path) -> tuple[list[str], list[str], list[str], list[str]]:
     config = load_config()
     rules: dict[str, int] = config["rules"]
     excludes: list[str] = config["exclude"]
@@ -230,8 +278,9 @@ def run_checks(root: Path) -> tuple[list[str], list[str], list[str]]:
         )
 
     eslint_errors = run_eslint(root)
+    knip_errors = run_knip(root)
 
-    return sorted(structural_errors), sorted(vulture_errors), sorted(eslint_errors)
+    return sorted(structural_errors), sorted(vulture_errors), sorted(eslint_errors), sorted(knip_errors)
 
 
 def _print_section(name: str, errors: list[str]) -> None:
@@ -243,11 +292,12 @@ def _print_section(name: str, errors: list[str]) -> None:
 
 def print_results(
     structural_errors: list[str], vulture_errors: list[str],
-    eslint_errors: list[str],
+    eslint_errors: list[str], knip_errors: list[str],
 ) -> None:
     _print_section("structlint", structural_errors)
     _print_section("vulture", vulture_errors)
     _print_section("eslint", eslint_errors)
+    _print_section("knip", knip_errors)
 
 
 def watch_loop(root: Path) -> None:
