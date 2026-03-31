@@ -1,5 +1,5 @@
 import os
-from backend.core.path_mngr import get_abspath
+from backend.core.utils.path_mngr import get_abspath
 
 class File:
     def __init__(self, filename, path):

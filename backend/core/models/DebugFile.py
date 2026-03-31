@@ -1,5 +1,5 @@
 import os
-from backend.core.File import File
+from backend.core.models.File import File
 from backend.core.DEFAULTS import DEFAULT_COLOR, DEFAULT_TOGGLED, DEFAULT_SET_MANUALLY, DEFAULT_SET_MANUALLY_EMOJI, DEFAULT_EMOJI
 
 class DebugFile(File):

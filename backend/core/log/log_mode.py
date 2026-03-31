@@ -1,7 +1,7 @@
 import os
 
 # LOG_MODE_FILE = 'debugger/log_mode.txt'
-LOG_MODE_FILE = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'log_mode.txt')
+LOG_MODE_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'data', 'log_mode.txt')
 def set_log_mode(mode):
     with open(LOG_MODE_FILE, 'w') as f:
         f.write(mode)

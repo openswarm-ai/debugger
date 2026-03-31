@@ -1,0 +1,484 @@
+[
+    {
+        "name": "root",
+        "color": "#ffffff",
+        "is_toggled": true,
+        "set_manually": false,
+        "set_manually_emoji": false,
+        "emoji": "⚫",
+        "children": [
+            {
+                "name": "archive",
+                "color": "#ffffff",
+                "is_toggled": true,
+                "set_manually": false,
+                "set_manually_emoji": false,
+                "emoji": "⚫",
+                "children": [
+                    {
+                        "name": "self-swarm",
+                        "color": "#ffffff",
+                        "is_toggled": true,
+                        "set_manually": false,
+                        "set_manually_emoji": false,
+                        "emoji": "⚫",
+                        "children": [
+                            {
+                                "name": "backend",
+                                "color": "#ffffff",
+                                "is_toggled": true,
+                                "set_manually": false,
+                                "set_manually_emoji": false,
+                                "emoji": "⚫",
+                                "children": [
+                                    {
+                                        "name": "config",
+                                        "color": "#ffffff",
+                                        "is_toggled": true,
+                                        "set_manually": false,
+                                        "set_manually_emoji": false,
+                                        "emoji": "⚫",
+                                        "children": [
+                                            {
+                                                "name": "Apps.py",
+                                                "color": "#ffffff",
+                                                "is_toggled": true,
+                                                "set_manually": false,
+                                                "set_manually_emoji": false,
+                                                "emoji": "⚫"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "name": "apps",
+                                        "color": "#ffffff",
+                                        "is_toggled": true,
+                                        "set_manually": false,
+                                        "set_manually_emoji": false,
+                                        "emoji": "⚫",
+                                        "children": [
+                                            {
+                                                "name": "mcp_registry",
+                                                "color": "#ffffff",
+                                                "is_toggled": true,
+                                                "set_manually": false,
+                                                "set_manually_emoji": false,
+                                                "emoji": "⚫",
+                                                "children": [
+                                                    {
+                                                        "name": "mcp_registry.py",
+                                                        "color": "#ffffff",
+                                                        "is_toggled": true,
+                                                        "set_manually": false,
+                                                        "set_manually_emoji": false,
+                                                        "emoji": "⚫"
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                "name": "skill_registry",
+                                                "color": "#ffffff",
+                                                "is_toggled": true,
+                                                "set_manually": false,
+                                                "set_manually_emoji": false,
+                                                "emoji": "⚫",
+                                                "children": [
+                                                    {
+                                                        "name": "skill_registry.py",
+                                                        "color": "#ffffff",
+                                                        "is_toggled": true,
+                                                        "set_manually": false,
+                                                        "set_manually_emoji": false,
+                                                        "emoji": "⚫"
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                "name": "health",
+                                                "color": "#ffffff",
+                                                "is_toggled": true,
+                                                "set_manually": false,
+                                                "set_manually_emoji": false,
+                                                "emoji": "⚫",
+                                                "children": [
+                                                    {
+                                                        "name": "health.py",
+                                                        "color": "#ffffff",
+                                                        "is_toggled": true,
+                                                        "set_manually": false,
+                                                        "set_manually_emoji": false,
+                                                        "emoji": "⚫"
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                "name": "channels",
+                                                "color": "#ffffff",
+                                                "is_toggled": true,
+                                                "set_manually": false,
+                                                "set_manually_emoji": false,
+                                                "emoji": "⚫",
+                                                "children": [
+                                                    {
+                                                        "name": "orchestrator.py",
+                                                        "color": "#ffffff",
+                                                        "is_toggled": true,
+                                                        "set_manually": false,
+                                                        "set_manually_emoji": false,
+                                                        "emoji": "⚫"
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "name": "openswarm",
+                        "color": "#ffffff",
+                        "is_toggled": true,
+                        "set_manually": false,
+                        "set_manually_emoji": false,
+                        "emoji": "⚫",
+                        "children": [
+                            {
+                                "name": "backend",
+                                "color": "#ffffff",
+                                "is_toggled": true,
+                                "set_manually": false,
+                                "set_manually_emoji": false,
+                                "emoji": "⚫",
+                                "children": [
+                                    {
+                                        "name": "config",
+                                        "color": "#ffffff",
+                                        "is_toggled": true,
+                                        "set_manually": false,
+                                        "set_manually_emoji": false,
+                                        "emoji": "⚫",
+                                        "children": [
+                                            {
+                                                "name": "Apps.py",
+                                                "color": "#ffffff",
+                                                "is_toggled": true,
+                                                "set_manually": false,
+                                                "set_manually_emoji": false,
+                                                "emoji": "⚫"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "name": "apps",
+                                        "color": "#ffffff",
+                                        "is_toggled": true,
+                                        "set_manually": false,
+                                        "set_manually_emoji": false,
+                                        "emoji": "⚫",
+                                        "children": [
+                                            {
+                                                "name": "mcp_registry",
+                                                "color": "#ffffff",
+                                                "is_toggled": true,
+                                                "set_manually": false,
+                                                "set_manually_emoji": false,
+                                                "emoji": "⚫",
+                                                "children": [
+                                                    {
+                                                        "name": "mcp_registry.py",
+                                                        "color": "#ffffff",
+                                                        "is_toggled": true,
+                                                        "set_manually": false,
+                                                        "set_manually_emoji": false,
+                                                        "emoji": "⚫"
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                "name": "skill_registry",
+                                                "color": "#ffffff",
+                                                "is_toggled": true,
+                                                "set_manually": false,
+                                                "set_manually_emoji": false,
+                                                "emoji": "⚫",
+                                                "children": [
+                                                    {
+                                                        "name": "skill_registry.py",
+                                                        "color": "#ffffff",
+                                                        "is_toggled": true,
+                                                        "set_manually": false,
+                                                        "set_manually_emoji": false,
+                                                        "emoji": "⚫"
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                "name": "health",
+                                                "color": "#ffffff",
+                                                "is_toggled": true,
+                                                "set_manually": false,
+                                                "set_manually_emoji": false,
+                                                "emoji": "⚫",
+                                                "children": [
+                                                    {
+                                                        "name": "health.py",
+                                                        "color": "#ffffff",
+                                                        "is_toggled": true,
+                                                        "set_manually": false,
+                                                        "set_manually_emoji": false,
+                                                        "emoji": "⚫"
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "name": "webapp-template",
+                "color": "#ffffff",
+                "is_toggled": true,
+                "set_manually": false,
+                "set_manually_emoji": false,
+                "emoji": "⚫",
+                "children": [
+                    {
+                        "name": "backend",
+                        "color": "#ffffff",
+                        "is_toggled": true,
+                        "set_manually": false,
+                        "set_manually_emoji": false,
+                        "emoji": "⚫",
+                        "children": [
+                            {
+                                "name": "config",
+                                "color": "#ffffff",
+                                "is_toggled": true,
+                                "set_manually": false,
+                                "set_manually_emoji": false,
+                                "emoji": "⚫",
+                                "children": [
+                                    {
+                                        "name": "Apps.py",
+                                        "color": "#ffffff",
+                                        "is_toggled": true,
+                                        "set_manually": false,
+                                        "set_manually_emoji": false,
+                                        "emoji": "⚫"
+                                    }
+                                ]
+                            },
+                            {
+                                "name": "apps",
+                                "color": "#ffffff",
+                                "is_toggled": true,
+                                "set_manually": false,
+                                "set_manually_emoji": false,
+                                "emoji": "⚫",
+                                "children": [
+                                    {
+                                        "name": "health",
+                                        "color": "#ffffff",
+                                        "is_toggled": true,
+                                        "set_manually": false,
+                                        "set_manually_emoji": false,
+                                        "emoji": "⚫",
+                                        "children": [
+                                            {
+                                                "name": "health.py",
+                                                "color": "#ffffff",
+                                                "is_toggled": true,
+                                                "set_manually": false,
+                                                "set_manually_emoji": false,
+                                                "emoji": "⚫"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "name": "openswarm",
+                "color": "#ffffff",
+                "is_toggled": true,
+                "set_manually": false,
+                "set_manually_emoji": false,
+                "emoji": "⚫",
+                "children": [
+                    {
+                        "name": "linter",
+                        "color": "#ffffff",
+                        "is_toggled": false,
+                        "set_manually": false,
+                        "set_manually_emoji": false,
+                        "emoji": "⚫",
+                        "children": [
+                            {
+                                "name": "config",
+                                "color": "#ffffff",
+                                "is_toggled": true,
+                                "set_manually": false,
+                                "set_manually_emoji": false,
+                                "emoji": "⚫",
+                                "children": [
+                                    {
+                                        "name": "vulture_whitelist.py",
+                                        "color": "#ffffff",
+                                        "is_toggled": true,
+                                        "set_manually": false,
+                                        "set_manually_emoji": false,
+                                        "emoji": "⚫"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "name": "backend",
+                        "color": "#ffffff",
+                        "is_toggled": true,
+                        "set_manually": false,
+                        "set_manually_emoji": false,
+                        "emoji": "⚫",
+                        "children": [
+                            {
+                                "name": "config",
+                                "color": "#ffffff",
+                                "is_toggled": true,
+                                "set_manually": false,
+                                "set_manually_emoji": false,
+                                "emoji": "⚫",
+                                "children": [
+                                    {
+                                        "name": "Apps.py",
+                                        "color": "#ffffff",
+                                        "is_toggled": true,
+                                        "set_manually": false,
+                                        "set_manually_emoji": false,
+                                        "emoji": "⚫"
+                                    }
+                                ]
+                            },
+                            {
+                                "name": "apps",
+                                "color": "#ffffff",
+                                "is_toggled": true,
+                                "set_manually": false,
+                                "set_manually_emoji": false,
+                                "emoji": "⚫",
+                                "children": [
+                                    {
+                                        "name": "mcp_registry",
+                                        "color": "#ffffff",
+                                        "is_toggled": true,
+                                        "set_manually": false,
+                                        "set_manually_emoji": false,
+                                        "emoji": "⚫",
+                                        "children": [
+                                            {
+                                                "name": "mcp_registry.py",
+                                                "color": "#ffffff",
+                                                "is_toggled": true,
+                                                "set_manually": false,
+                                                "set_manually_emoji": false,
+                                                "emoji": "⚫"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "name": "skill_registry",
+                                        "color": "#ffffff",
+                                        "is_toggled": true,
+                                        "set_manually": false,
+                                        "set_manually_emoji": false,
+                                        "emoji": "⚫",
+                                        "children": [
+                                            {
+                                                "name": "skill_registry.py",
+                                                "color": "#ffffff",
+                                                "is_toggled": true,
+                                                "set_manually": false,
+                                                "set_manually_emoji": false,
+                                                "emoji": "⚫"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "name": "health",
+                                        "color": "#ffffff",
+                                        "is_toggled": true,
+                                        "set_manually": false,
+                                        "set_manually_emoji": false,
+                                        "emoji": "⚫",
+                                        "children": [
+                                            {
+                                                "name": "health.py",
+                                                "color": "#ffffff",
+                                                "is_toggled": true,
+                                                "set_manually": false,
+                                                "set_manually_emoji": false,
+                                                "emoji": "⚫"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "name": "nine_router",
+                                        "color": "#ffffff",
+                                        "is_toggled": false,
+                                        "set_manually": false,
+                                        "set_manually_emoji": false,
+                                        "emoji": "⚫",
+                                        "children": [
+                                            {
+                                                "name": "client.py",
+                                                "color": "#ffffff",
+                                                "is_toggled": true,
+                                                "set_manually": false,
+                                                "set_manually_emoji": false,
+                                                "emoji": "⚫"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "name": "analytics",
+                                        "color": "#ffffff",
+                                        "is_toggled": true,
+                                        "set_manually": false,
+                                        "set_manually_emoji": false,
+                                        "emoji": "⚫",
+                                        "children": [
+                                            {
+                                                "name": "collector.py",
+                                                "color": "#ffffff",
+                                                "is_toggled": true,
+                                                "set_manually": false,
+                                                "set_manually_emoji": false,
+                                                "emoji": "⚫"
+                                            },
+                                            {
+                                                "name": "analytics.py",
+                                                "color": "#ffffff",
+                                                "is_toggled": true,
+                                                "set_manually": false,
+                                                "set_manually_emoji": false,
+                                                "emoji": "⚫"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+]

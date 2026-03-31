@@ -2,15 +2,15 @@ import logging
 import json
 import os
 from backend.config.Apps import SubApp
-from backend.core.project_scanner import update_debug_toggles, dir_to_output_format
+from backend.core.models.project_scanner import update_debug_toggles, dir_to_output_format
 from contextlib import asynccontextmanager
 from fastapi.responses import JSONResponse
 from typeguard import typechecked
 
 log = logging.getLogger(__name__)
 
-NEEDS_RESYNC_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'needs_resync.txt')
-DEBUG_TOGGLE_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'debug_toggles.json')
+NEEDS_RESYNC_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'data', 'needs_resync.txt')
+DEBUG_TOGGLE_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'data', 'debug_toggles.json')
 
 
 @asynccontextmanager

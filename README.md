@@ -79,18 +79,22 @@ debugger/
 │   │   ├── __init__.py
 │   │   ├── DEFAULTS.py
 │   │   ├── Debugleton.py
-│   │   ├── DebugFile.py
-│   │   ├── Directory.py
-│   │   ├── File.py
-│   │   ├── color_adjuster.py
-│   │   ├── debug_arg_parser.py
-│   │   ├── log_config.py
-│   │   ├── log_mode.py
-│   │   ├── path_mngr.py
-│   │   └── project_scanner.py
-│   ├── debug_toggles.json
-│   ├── log_mode.txt
-│   └── needs_resync.txt
+│   │   ├── models/
+│   │   │   ├── File.py
+│   │   │   ├── DebugFile.py
+│   │   │   ├── Directory.py
+│   │   │   └── project_scanner.py
+│   │   ├── log/
+│   │   │   ├── log_config.py
+│   │   │   └── log_mode.py
+│   │   └── utils/
+│   │       ├── color_adjuster.py
+│   │       ├── debug_arg_parser.py
+│   │       └── path_mngr.py
+│   └── data/
+│       ├── debug_toggles.json
+│       ├── log_mode.txt
+│       └── needs_resync.txt
 └── frontend/
     ├── run.sh                          # Standalone frontend runner
     ├── package.json                    # Webpack-based, MUI v7, Redux, Framer Motion
