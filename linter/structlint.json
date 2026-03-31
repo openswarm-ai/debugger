@@ -3,7 +3,8 @@
     "max-file-lines": 250,
     "max-folder-items": 7,
     "vulture-min-confidence": 1,
-    "vulture-error-threshold": 1
+    "vulture-error-threshold": 1,
+    "no-nested-imports": true
   },
   "include_extensions": [".py", ".ts", ".tsx", ".js", ".jsx"],
   "exclude": [
@@ -27,6 +28,7 @@
     "max-folder-items": [
       "frontend"
     ],
+    "no-nested-imports": ["linter/structlint.py"],
     "vulture": []
   }
 }

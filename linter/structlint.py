@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import ast
 import fnmatch
 import json
 import os
@@ -102,6 +103,38 @@ def check_folder_items(
         )
         return (msg, count)
     return None
+
+
+def check_nested_imports(filepath: Path, root: Path) -> list[str]:
+    """Detect import statements inside function or method bodies."""
+    if filepath.suffix != ".py":
+        return []
+    try:
+        source = filepath.read_text(errors="ignore")
+        tree = ast.parse(source, filename=str(filepath))
+    except (OSError, SyntaxError):
+        return []
+
+    errors: list[str] = []
+    rel = str(filepath.relative_to(root))
+
+    def _visit(node: ast.AST, in_function: bool) -> None:
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            in_function = True
+        if in_function and isinstance(node, (ast.Import, ast.ImportFrom)):
+            if isinstance(node, ast.ImportFrom):
+                name = node.module or ""
+            else:
+                name = ", ".join(a.name for a in node.names)
+            errors.append(
+                f"{rel}:{node.lineno}:1: error: "
+                f"Nested import '{name}' [no-nested-imports]"
+            )
+        for child in ast.iter_child_nodes(node):
+            _visit(child, in_function)
+
+    _visit(tree, False)
+    return errors
 
 
 def run_vulture(
@@ -242,6 +275,7 @@ def run_checks(root: Path) -> tuple[list[str], list[str], list[str], list[str]]:
 
     max_lines: int = rules["max-file-lines"]
     max_items: int = rules["max-folder-items"]
+    check_imports: bool = rules.get("no-nested-imports", False)
     structural_errors: list[str] = []
 
     for dirpath_str, dirnames, filenames in os.walk(root):
@@ -268,6 +302,8 @@ def run_checks(root: Path) -> tuple[list[str], list[str], list[str], list[str]]:
                 result = check_file_lines(fp, root, max_lines)
                 if result:
                     structural_errors.append(result[0])
+            if check_imports and not is_excepted(rel_file, "no-nested-imports", exceptions):
+                structural_errors.extend(check_nested_imports(fp, root))
 
     vulture_errors: list[str] = []
     vulture_confidence = rules.get("vulture-min-confidence")
