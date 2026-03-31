@@ -30,7 +30,7 @@ if [ $LINT_EXIT -ne 0 ]; then
         echo "$STRUCT_LINES" | while IFS= read -r line; do
             [ -n "$line" ] && echo -e "${YELLOW}  $line${RESET}"
         done
-        echo -e "${YELLOW}${BOLD}  ${STRUCT_COUNT} violation(s) — fix or add exceptions in linter/config.json${RESET}"
+        echo -e "${YELLOW}${BOLD}  ${STRUCT_COUNT} violation(s) — fix or add exceptions in linter/config/config.json${RESET}"
     fi
 
     if [ "$VULTURE_COUNT" -gt 0 ]; then
@@ -39,7 +39,7 @@ if [ $LINT_EXIT -ne 0 ]; then
         echo "$VULTURE_LINES" | while IFS= read -r line; do
             [ -n "$line" ] && echo -e "${CYAN}  $line${RESET}"
         done
-        echo -e "${CYAN}${BOLD}  ${VULTURE_COUNT} finding(s) — fix or add to linter/vulture_whitelist.py${RESET}"
+        echo -e "${CYAN}${BOLD}  ${VULTURE_COUNT} finding(s) — fix or add to linter/config/vulture_whitelist.py${RESET}"
     fi
 
     if [ "$ESLINT_COUNT" -gt 0 ]; then

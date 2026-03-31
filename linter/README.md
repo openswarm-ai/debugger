@@ -22,7 +22,7 @@ These rules apply to `.py`, `.ts`, `.tsx`, `.js`, and `.jsx` files.
 
 ### Type checking
 
-**Python (Pyright/Pylance)** — Strict type checking for the backend, configured via `pyrightconfig.json`. Works through the Pylance extension in real-time.
+**Python (Pyright/Pylance)** — Strict type checking for the backend, configured via `config/pyrightconfig.json`. Works through the Pylance extension in real-time.
 
 **TypeScript** — The `tsconfig.json` in `frontend/` has strict mode enabled. TypeScript errors show in the editor automatically.
 
@@ -65,7 +65,7 @@ Or use the `knip:check` VS Code task (`Cmd+Shift+P` → "Run Task" → "knip:che
 
 ## Configuration
 
-### config.json
+### config/config.json
 
 ```json
 {
@@ -97,7 +97,7 @@ Set any key in `"enabled"` to `false` to skip that check entirely. Missing keys 
 
 ### Vulture whitelist
 
-`vulture_whitelist.py` suppresses false positives — symbols used by frameworks, entry points, or external consumers that vulture can't detect statically. Add bare names to the file to mark them as intentionally used.
+`config/vulture_whitelist.py` suppresses false positives — symbols used by frameworks, entry points, or external consumers that vulture can't detect statically. Add bare names to the file to mark them as intentionally used.
 
 ### ESLint
 
@@ -109,7 +109,7 @@ Set any key in `"enabled"` to `false` to skip that check entirely. Missing keys 
 
 ## Adding exceptions
 
-If a file legitimately needs to exceed a limit, add a glob to the `exceptions` list in `config.json`:
+If a file legitimately needs to exceed a limit, add a glob to the `exceptions` list in `config/config.json`:
 
 ```json
 {
@@ -123,11 +123,21 @@ If a file legitimately needs to exceed a limit, add a glob to the `exceptions` l
 
 Wildcards work: `"backend/tests/*"` exempts all files in the tests folder.
 
-## Files in this folder
+## Folder structure
 
-| File | Purpose |
-|---|---|
-| `lint.py` | Unified linter (structural checks + vulture + eslint + knip) |
-| `config.json` | Enabled checks, rules, exclusions, and exceptions |
-| `vulture_whitelist.py` | False positive suppressions for vulture |
-| `pyrightconfig.json` | Python type checking config |
+```
+linter/
+  checks/              # check implementations
+    __init__.py        # shared filter/match utilities
+    structural.py      # file length, folder size, nested imports
+    vulture.py         # vulture dead-code runner
+    eslint.py          # eslint runner
+    knip.py            # knip unused-code runner
+  config/              # all configuration files
+    config.json        # enabled checks, rules, exclusions, exceptions
+    pyrightconfig.json # python type checking config
+    vulture_whitelist.py # false positive suppressions for vulture
+  lint.py              # orchestrator (loads config, runs checks, outputs results)
+  print_errors.sh      # colored terminal reporter
+  README.md
+```

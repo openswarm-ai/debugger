@@ -1,269 +1,28 @@
 #!/usr/bin/env python3
-"""Unified linter: enforces file/folder limits, nested-import checks, and unused-code detection."""
+"""Unified linter: orchestrates structural checks, dead-code detection, and lint tools."""
 
 from __future__ import annotations
 
 import argparse
-import ast
-import fnmatch
 import json
 import os
-import re
-import shutil
-import subprocess
 import sys
 from pathlib import Path
 from typing import Any
 
+from checks import is_excluded, is_excepted
+from checks.structural import check_file_lines, check_folder_items, check_nested_imports
+from checks.vulture import run_vulture
+from checks.eslint import run_eslint
+from checks.knip import run_knip
+
 SCRIPT_DIR = Path(__file__).resolve().parent
-CONFIG_FILE = SCRIPT_DIR / "config.json"
+CONFIG_FILE = SCRIPT_DIR / "config" / "config.json"
 
 
 def load_config() -> dict[str, Any]:
     with open(CONFIG_FILE) as f:
         return json.load(f)
-
-
-def _matches_any(text: str, patterns: list[str]) -> bool:
-    return any(fnmatch.fnmatch(text, p) for p in patterns)
-
-
-def is_excluded(path: Path, root: Path, excludes: list[str]) -> bool:
-    rel = path.relative_to(root)
-    for part in rel.parts:
-        if _matches_any(part, excludes):
-            return True
-    return _matches_any(str(rel), excludes)
-
-
-def is_excepted(rel_path: str, rule: str, exceptions: dict[str, list[str]]) -> bool:
-    return _matches_any(rel_path, exceptions.get(rule, []))
-
-
-def check_file_lines(
-    filepath: Path, root: Path, max_lines: int,
-) -> tuple[str, int] | None:
-    try:
-        count = len(filepath.read_text(errors="ignore").splitlines())
-    except OSError:
-        return None
-    if count >= max_lines:
-        rel = filepath.relative_to(root)
-        msg = (
-            f"{rel}:1:1: error: File has {count} lines "
-            f"(limit {max_lines}) [max-file-lines]"
-        )
-        return (msg, count)
-    return None
-
-
-ANCHOR_FILES = ("__init__.py", "index.ts", "index.tsx", "index.js")
-
-
-def _find_anchor_file(dirpath: Path, root: Path) -> str:
-    """Find a real file inside the folder to attach the diagnostic to.
-
-    Prefers common entry-point files (__init__.py, index.ts, etc.) so the
-    error shows up inline when you open that file. Falls back to the first
-    file alphabetically, then the directory path itself.
-    """
-    for name in ANCHOR_FILES:
-        candidate = dirpath / name
-        if candidate.exists():
-            return str(candidate.relative_to(root))
-    try:
-        first = sorted(
-            f for f in dirpath.iterdir()
-            if f.is_file() and not f.name.startswith(".")
-        )
-        if first:
-            return str(first[0].relative_to(root))
-    except OSError:
-        pass
-    return str(dirpath.relative_to(root))
-
-
-def check_folder_items(
-    dirpath: Path, root: Path, max_items: int, excludes: list[str],
-) -> tuple[str, int] | None:
-    try:
-        items = [
-            i for i in dirpath.iterdir()
-            if not i.name.startswith(".") and not _matches_any(i.name, excludes)
-        ]
-    except OSError:
-        return None
-    count = len(items)
-    if count >= max_items:
-        anchor = _find_anchor_file(dirpath, root)
-        rel = dirpath.relative_to(root)
-        msg = (
-            f"{anchor}:1:1: error: Folder '{rel}' has {count} items "
-            f"(limit {max_items}) [max-folder-items]"
-        )
-        return (msg, count)
-    return None
-
-
-def check_nested_imports(filepath: Path, root: Path) -> list[str]:
-    """Detect import statements inside function or method bodies."""
-    if filepath.suffix != ".py":
-        return []
-    try:
-        source = filepath.read_text(errors="ignore")
-        tree = ast.parse(source, filename=str(filepath))
-    except (OSError, SyntaxError):
-        return []
-
-    errors: list[str] = []
-    rel = str(filepath.relative_to(root))
-
-    def _visit(node: ast.AST, in_function: bool) -> None:
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-            in_function = True
-        if in_function and isinstance(node, (ast.Import, ast.ImportFrom)):
-            if isinstance(node, ast.ImportFrom):
-                name = node.module or ""
-            else:
-                name = ", ".join(a.name for a in node.names)
-            errors.append(
-                f"{rel}:{node.lineno}:1: error: "
-                f"Nested import '{name}' [no-nested-imports]"
-            )
-        for child in ast.iter_child_nodes(node):
-            _visit(child, in_function)
-
-    _visit(tree, False)
-    return errors
-
-
-def run_vulture(
-    root: Path, min_confidence: int, error_threshold: int,
-    exceptions: dict[str, list[str]],
-) -> list[str]:
-    """Run vulture on the Python backend and return errors."""
-    vulture_bin = root / "backend" / ".venv" / "bin" / "vulture"
-    if not vulture_bin.exists():
-        found = shutil.which("vulture")
-        if not found:
-            return []
-        vulture_bin = Path(found)
-
-    whitelist = SCRIPT_DIR / "vulture_whitelist.py"
-    cmd = [str(vulture_bin), "backend", "debug.py"]
-    if whitelist.exists():
-        cmd.append(str(whitelist))
-    cmd.extend([
-        "--min-confidence", str(min_confidence),
-        "--exclude", ".venv,__pycache__,data,uv-bin",
-    ])
-
-    try:
-        result = subprocess.run(
-            cmd, capture_output=True, text=True, cwd=str(root), timeout=30,
-        )
-    except (OSError, subprocess.TimeoutExpired):
-        return []
-
-    errors: list[str] = []
-    for line in result.stdout.strip().splitlines():
-        m = re.match(r"^(.+):(\d+): (.+)$", line)
-        if not m:
-            continue
-        filepath, lineno, message = m.groups()
-        if is_excepted(filepath, "vulture", exceptions):
-            continue
-        conf = re.search(r"\((\d+)% confidence\)", message)
-        confidence = int(conf.group(1)) if conf else 0
-        severity = "error" if confidence >= error_threshold else "warning"
-        errors.append(f"{filepath}:{lineno}:1: {severity}: {message} [vulture]")
-    return errors
-
-
-def run_eslint(root: Path) -> list[str]:
-    """Run ESLint on the TypeScript frontend and return errors."""
-    frontend_dir = root / "frontend"
-    eslint_bin = frontend_dir / "node_modules" / ".bin" / "eslint"
-    if not eslint_bin.exists():
-        return []
-
-    cmd = [str(eslint_bin), "src/", "--format", "json", "--no-warn-ignored"]
-    try:
-        result = subprocess.run(
-            cmd, capture_output=True, text=True,
-            cwd=str(frontend_dir), timeout=60,
-        )
-    except (OSError, subprocess.TimeoutExpired):
-        return []
-
-    try:
-        data = json.loads(result.stdout)
-    except (json.JSONDecodeError, ValueError):
-        return []
-
-    errors: list[str] = []
-    for entry in data:
-        try:
-            rel = str(Path(entry["filePath"]).relative_to(root))
-        except (ValueError, KeyError):
-            continue
-        for msg in entry.get("messages", []):
-            sev = "error" if msg.get("severity", 0) >= 2 else "warning"
-            text = msg.get("message", "").replace("\n", " ").strip()
-            rule = msg.get("ruleId") or "unknown"
-            errors.append(
-                f"{rel}:{msg.get('line', 1)}:{msg.get('column', 1)}: "
-                f"{sev}: {text} [{rule}] [eslint]"
-            )
-    return errors
-
-
-def run_knip(root: Path) -> list[str]:
-    """Run Knip on the TypeScript frontend and return errors."""
-    frontend_dir = root / "frontend"
-    knip_bin = frontend_dir / "node_modules" / ".bin" / "knip"
-    if not knip_bin.exists():
-        return []
-
-    cmd = [str(knip_bin), "--reporter", "json"]
-    try:
-        result = subprocess.run(
-            cmd, capture_output=True, text=True,
-            cwd=str(frontend_dir), timeout=60,
-        )
-    except (OSError, subprocess.TimeoutExpired):
-        return []
-
-    try:
-        data = json.loads(result.stdout)
-    except (json.JSONDecodeError, ValueError):
-        return []
-
-    KIND_LABELS = {
-        "dependencies": "Unused dependency",
-        "devDependencies": "Unused devDependency",
-        "exports": "Unused export",
-        "types": "Unused exported type",
-        "unlisted": "Unlisted dependency",
-        "binaries": "Unused binary",
-        "files": "Unused file",
-        "duplicates": "Duplicate export",
-    }
-
-    errors: list[str] = []
-    for entry in data.get("issues", []):
-        filepath = entry.get("file", "")
-        rel = f"frontend/{filepath}"
-        for kind, label in KIND_LABELS.items():
-            for item in entry.get(kind, []):
-                name = item.get("name", "")
-                line = item.get("line", 1)
-                col = item.get("col", 1)
-                errors.append(
-                    f"{rel}:{line}:{col}: error: "
-                    f"{label} '{name}' [knip]"
-                )
-    return errors
 
 
 def run_checks(root: Path) -> tuple[list[str], list[str], list[str], list[str]]:
@@ -345,6 +104,8 @@ def print_results(
 def watch_loop(root: Path) -> None:
     from watchfiles import watch, DefaultFilter
 
+    config_dir = SCRIPT_DIR / "config"
+
     print_results(*run_checks(root))
 
     class SourceFilter(DefaultFilter):
@@ -355,7 +116,8 @@ def watch_loop(root: Path) -> None:
                 return False
             if Path(path).suffix in self.allowed_extensions:
                 return True
-            if Path(path).parent == SCRIPT_DIR and Path(path).suffix == ".json":
+            p = Path(path)
+            if p.suffix == ".json" and (p.parent == SCRIPT_DIR or p.parent == config_dir):
                 return True
             return Path(path).is_dir()
 
