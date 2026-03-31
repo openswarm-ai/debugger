@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useMemo } from 'react';
+import React, { createContext, useContext } from 'react';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 
@@ -57,7 +57,7 @@ const tokens = {
   transition: 'all 300ms cubic-bezier(0.165, 0.85, 0.45, 1)',
 };
 
-export type ClaudeTokens = typeof tokens;
+type ClaudeTokens = typeof tokens;
 
 const TokensContext = createContext<ClaudeTokens>(tokens);
 

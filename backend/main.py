@@ -1,5 +1,6 @@
 import logging
 import os
+import uvicorn
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -31,7 +32,6 @@ if os.path.isdir(BUILD_DIR):
 
 
 def main():
-    import uvicorn
     port = int(os.environ.get("BACKEND_PORT", 8324))
     uvicorn.run("backend.main:app", host="0.0.0.0", port=port, reload=False)
 

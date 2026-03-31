@@ -1,13 +1,11 @@
 import React, { useState, useCallback } from 'react';
 import Box from '@mui/material/Box';
-import { useClaudeTokens } from '@/shared/styles/ThemeContext';
 import { useAppSelector } from '@/shared/hooks';
 import { TreeNodeData } from '@/types';
 import TreeNode from '@/app/components/Tree/TreeNode';
 import { TreeHoverContext } from '@/app/components/Tree/TreeHoverContext';
 
 const Tree: React.FC = () => {
-  const c = useClaudeTokens();
   const projectStructure = useAppSelector((s) => s.debugger.projectStructure);
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
   const clearHover = useCallback(() => setHoveredNodeId(null), []);

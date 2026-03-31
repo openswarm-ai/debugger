@@ -26,19 +26,3 @@ class DebugFile(File):
             "set_manually_emoji": self.set_manually_emoji,
             "emoji": self.emoji
         }
-
-    @classmethod
-    def from_dict(cls, file_dict, directory):
-        """
-        Creates a DebugFile object from a dictionary loaded from JSON.
-        """
-        filename = os.path.join(directory.path, file_dict["name"])
-        return cls(
-            filename=filename,
-            color=file_dict.get("color", DEFAULT_COLOR),
-            is_toggled=file_dict.get("is_toggled", DEFAULT_TOGGLED),
-            set_manually=file_dict.get("set_manually", DEFAULT_SET_MANUALLY),
-            set_manually_emoji=file_dict.get("set_manually_emoji", DEFAULT_SET_MANUALLY_EMOJI),
-            emoji=file_dict.get("emoji", DEFAULT_EMOJI),
-            directory=directory
-        )

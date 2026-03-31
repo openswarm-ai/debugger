@@ -38,13 +38,9 @@ class LogConfig:
             self.logger._log(self.MODES[mode], message, args, **kwargs)
 
     def set_debug_mode(self, mode):
-        current_mode = get_log_mode()
         # print(f"Setting debug mode from {current_mode} -> to {mode}")
         if mode not in self.MODES: raise ValueError(f"Invalid mode: {mode}")
         set_log_mode(mode)
         self.logger.setLevel(self.MODES[mode])
-
-    def get_debug_mode(self):
-        return get_log_mode()
 
 log_config = LogConfig()

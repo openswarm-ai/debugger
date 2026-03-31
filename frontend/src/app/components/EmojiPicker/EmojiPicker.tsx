@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import Box from '@mui/material/Box';
 import IconButton from '@mui/material/IconButton';
 import Popover from '@mui/material/Popover';
@@ -23,10 +23,12 @@ const EmojiPicker: React.FC<EmojiPickerProps> = ({ defaultEmoji, handleEmojiChan
   const [selectedEmoji, setSelectedEmoji] = useState(defaultEmoji || '⚫');
   const [currentPage, setCurrentPage] = useState(0);
   const [currentFolder, setCurrentFolder] = useState(firstFolder);
+  const [prevDefaultEmoji, setPrevDefaultEmoji] = useState(defaultEmoji);
 
-  useEffect(() => {
-    if (defaultEmoji) setSelectedEmoji(defaultEmoji);
-  }, [defaultEmoji]);
+  if (defaultEmoji && defaultEmoji !== prevDefaultEmoji) {
+    setPrevDefaultEmoji(defaultEmoji);
+    setSelectedEmoji(defaultEmoji);
+  }
 
   const open = Boolean(anchorEl);
 

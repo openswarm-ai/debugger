@@ -6,7 +6,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import { motion } from 'framer-motion';
 import { useClaudeTokens } from '@/shared/styles/ThemeContext';
 import { useAppDispatch, useAppSelector } from '@/shared/hooks';
-import { pullWithRetry, pushStructure, setSaveStatus, setShowSettings, expandAll, collapseAll } from '@/shared/state/debuggerSlice';
+import { pullWithRetry, pushStructure, setSaveStatus, expandAll, collapseAll } from '@/shared/state/debuggerSlice';
 import OpenInFullIcon from '@mui/icons-material/OpenInFull';
 import CloseFullscreenIcon from '@mui/icons-material/CloseFullscreen';
 import DebuggerHeader from '@/app/pages/Debugger/DebuggerHeader';

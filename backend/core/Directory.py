@@ -1,7 +1,5 @@
 import os
-import json
 import colorsys
-from pathlib import Path
 from backend.core.DebugFile import DebugFile
 from backend.core.DEFAULTS import DEFAULT_COLOR, DEFAULT_TOGGLED, DEFAULT_SET_MANUALLY, DEFAULT_SET_MANUALLY_EMOJI, DEFAULT_EMOJI
 from backend.core.path_mngr import get_abspath, get_root_rel_path

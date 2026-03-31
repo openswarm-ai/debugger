@@ -1,11 +1,3 @@
-import colorsys
-
-def adjust_brightness(color, brightness_factor):
-    hls = colorsys.rgb_to_hls(*[x/255.0 for x in color]) # Convert RGB to HLS
-    hls = (hls[0], max(0, min(1, hls[1] + brightness_factor)), hls[2]) # Adjust lightness
-    rgb = [int(x*255.0) for x in colorsys.hls_to_rgb(*hls)] # Convert back to RGB
-    return rgb
-
 
 def rgb_to_ansi(rgb):
     return '\033[38;2;{};{};{}m'.format(*rgb)
