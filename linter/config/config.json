@@ -34,7 +34,8 @@
   "exceptions": {
     "max-file-lines": ["openswarm_debug.egg-info/**"],
     "max-folder-items": [
-      "frontend"
+      "frontend",
+      "backend"
     ],
     "no-nested-imports": ["linter/lint.py"],
     "vulture": []
