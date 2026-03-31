@@ -49,6 +49,23 @@
             "beginsPattern": "^vulture: checking\\.\\.\\.$",
             "endsPattern": "^vulture: done\\."
           }
+        },
+        {
+          "owner": "eslint-project",
+          "fileLocation": ["relative", "${workspaceFolder}"],
+          "pattern": {
+            "regexp": "^(.+):(\\d+):(\\d+):\\s+(error|warning):\\s+(.+)$",
+            "file": 1,
+            "line": 2,
+            "column": 3,
+            "severity": 4,
+            "message": 5
+          },
+          "background": {
+            "activeOnStart": true,
+            "beginsPattern": "^eslint: checking\\.\\.\\.$",
+            "endsPattern": "^eslint: done\\."
+          }
         }
       ]
     },
@@ -57,18 +74,32 @@
       "type": "shell",
       "command": "python3",
       "args": ["${workspaceFolder}/linter/structlint.py", "--root", "${workspaceFolder}"],
-      "problemMatcher": {
-        "owner": "structlint",
-        "fileLocation": ["relative", "${workspaceFolder}"],
-        "pattern": {
-          "regexp": "^(.+):(\\d+):(\\d+):\\s+(error|warning):\\s+(.+)$",
-          "file": 1,
-          "line": 2,
-          "column": 3,
-          "severity": 4,
-          "message": 5
+      "problemMatcher": [
+        {
+          "owner": "structlint",
+          "fileLocation": ["relative", "${workspaceFolder}"],
+          "pattern": {
+            "regexp": "^(.+):(\\d+):(\\d+):\\s+(error|warning):\\s+(.+)$",
+            "file": 1,
+            "line": 2,
+            "column": 3,
+            "severity": 4,
+            "message": 5
+          }
+        },
+        {
+          "owner": "eslint-project",
+          "fileLocation": ["relative", "${workspaceFolder}"],
+          "pattern": {
+            "regexp": "^(.+):(\\d+):(\\d+):\\s+(error|warning):\\s+(.+)$",
+            "file": 1,
+            "line": 2,
+            "column": 3,
+            "severity": 4,
+            "message": 5
+          }
         }
-      }
+      ]
     },
     {
       "label": "knip:check",

@@ -23,7 +23,7 @@
     "frontend/src/assets"
   ],
   "exceptions": {
-    "max-file-lines": ["openswarm_debug.egg-info/**"],
+    "max-file-lines": ["openswarm_debug.egg-info/**", "linter/structlint.py"],
     "max-folder-items": [
       "frontend"
     ],

@@ -147,7 +147,45 @@ def run_vulture(
     return errors
 
 
-def run_checks(root: Path) -> tuple[list[str], list[str]]:
+def run_eslint(root: Path) -> list[str]:
+    """Run ESLint on the TypeScript frontend and return errors."""
+    frontend_dir = root / "frontend"
+    eslint_bin = frontend_dir / "node_modules" / ".bin" / "eslint"
+    if not eslint_bin.exists():
+        return []
+
+    cmd = [str(eslint_bin), "src/", "--format", "json", "--no-warn-ignored"]
+    try:
+        result = subprocess.run(
+            cmd, capture_output=True, text=True,
+            cwd=str(frontend_dir), timeout=60,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return []
+
+    try:
+        data = json.loads(result.stdout)
+    except (json.JSONDecodeError, ValueError):
+        return []
+
+    errors: list[str] = []
+    for entry in data:
+        try:
+            rel = str(Path(entry["filePath"]).relative_to(root))
+        except (ValueError, KeyError):
+            continue
+        for msg in entry.get("messages", []):
+            sev = "error" if msg.get("severity", 0) >= 2 else "warning"
+            text = msg.get("message", "").replace("\n", " ").strip()
+            rule = msg.get("ruleId") or "unknown"
+            errors.append(
+                f"{rel}:{msg.get('line', 1)}:{msg.get('column', 1)}: "
+                f"{sev}: {text} [{rule}] [eslint]"
+            )
+    return errors
+
+
+def run_checks(root: Path) -> tuple[list[str], list[str], list[str]]:
     config = load_config()
     rules: dict[str, int] = config["rules"]
     excludes: list[str] = config["exclude"]
@@ -191,7 +229,9 @@ def run_checks(root: Path) -> tuple[list[str], list[str]]:
             root, vulture_confidence, vulture_error_threshold, exceptions,
         )
 
-    return sorted(structural_errors), sorted(vulture_errors)
+    eslint_errors = run_eslint(root)
+
+    return sorted(structural_errors), sorted(vulture_errors), sorted(eslint_errors)
 
 
 def _print_section(name: str, errors: list[str]) -> None:
@@ -203,9 +243,11 @@ def _print_section(name: str, errors: list[str]) -> None:
 
 def print_results(
     structural_errors: list[str], vulture_errors: list[str],
+    eslint_errors: list[str],
 ) -> None:
     _print_section("structlint", structural_errors)
     _print_section("vulture", vulture_errors)
+    _print_section("eslint", eslint_errors)
 
 
 def watch_loop(root: Path) -> None:
