@@ -1,5 +1,5 @@
 import os
-from backend.core.data_dir import TOGGLE_FILE, ROOT_DIR_FILE
+from swarm_debug.core.data_dir import TOGGLE_FILE, ROOT_DIR_FILE
 
 DEFAULT_COLOR = '#ffffff'
 DEFAULT_TOGGLED = False

@@ -30,7 +30,7 @@ def main():
     args = parser.parse_args()
 
     if args.gui:
-        from backend.main import start_server
+        from swarm_debug.server import start_server
         start_server(port=args.port, open_browser=True)
     else:
         parser.print_help()

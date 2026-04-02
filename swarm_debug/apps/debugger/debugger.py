@@ -1,10 +1,10 @@
 import logging
 import json
 import os
-from backend.config.Apps import SubApp
-from backend.core.models.project_scanner import update_debug_toggles, dir_to_output_format
-from backend.core.data_dir import NEEDS_RESYNC_FILE, TOGGLE_FILE as DEBUG_TOGGLE_FILE
-from backend.core.DEFAULTS import get_root_dir, set_root_dir
+from swarm_debug.config.Apps import SubApp
+from swarm_debug.core.models.project_scanner import update_debug_toggles, dir_to_output_format
+from swarm_debug.core.data_dir import NEEDS_RESYNC_FILE, TOGGLE_FILE as DEBUG_TOGGLE_FILE
+from swarm_debug.core.DEFAULTS import get_root_dir, set_root_dir
 from contextlib import asynccontextmanager
 from fastapi.responses import JSONResponse
 from typeguard import typechecked

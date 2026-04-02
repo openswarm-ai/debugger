@@ -1,5 +1,5 @@
 import os
-from backend.core.DEFAULTS import get_root_dir
+from swarm_debug.core.DEFAULTS import get_root_dir
 
 
 def get_abspath(path: str):

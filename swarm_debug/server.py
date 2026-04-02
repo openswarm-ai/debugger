@@ -7,9 +7,9 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 
-from backend.config.Apps import MainApp
-from backend.apps.health.health import health
-from backend.apps.debugger.debugger import debugger
+from swarm_debug.config.Apps import MainApp
+from swarm_debug.apps.health.health import health
+from swarm_debug.apps.debugger.debugger import debugger
 from fastapi.middleware.cors import CORSMiddleware
 
 main_app = MainApp([health, debugger])
@@ -25,7 +25,7 @@ app.add_middleware(
 
 from fastapi.staticfiles import StaticFiles
 
-BUILD_DIR = os.path.join(os.path.dirname(__file__), 'debugger_gui_build')
+BUILD_DIR = os.path.join(os.path.dirname(__file__), "debugger_gui_build")
 
 if os.path.isdir(BUILD_DIR):
     app.mount("/", StaticFiles(directory=BUILD_DIR, html=True), name="gui")
@@ -36,7 +36,7 @@ def start_server(port: int = 6969, open_browser: bool = False):
         import threading
         import webbrowser
         threading.Timer(1.0, lambda: webbrowser.open(f"http://localhost:{port}")).start()
-    uvicorn.run("backend.main:app", host="0.0.0.0", port=port, reload=False)
+    uvicorn.run("swarm_debug.server:app", host="0.0.0.0", port=port, reload=False)
 
 
 def main():

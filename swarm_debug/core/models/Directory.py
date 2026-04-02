@@ -1,8 +1,8 @@
 import os
 import colorsys
-from backend.core.models.DebugFile import DebugFile
-from backend.core.DEFAULTS import DEFAULT_COLOR, DEFAULT_TOGGLED, DEFAULT_SET_MANUALLY, DEFAULT_SET_MANUALLY_EMOJI, DEFAULT_EMOJI, get_root_dir
-from backend.core.utils.path_mngr import get_abspath, get_root_rel_path
+from swarm_debug.core.models.DebugFile import DebugFile
+from swarm_debug.core.DEFAULTS import DEFAULT_COLOR, DEFAULT_TOGGLED, DEFAULT_SET_MANUALLY, DEFAULT_SET_MANUALLY_EMOJI, DEFAULT_EMOJI, get_root_dir
+from swarm_debug.core.utils.path_mngr import get_abspath, get_root_rel_path
 
 class Directory:
     def __init__(self, path, color=DEFAULT_COLOR, is_toggled=DEFAULT_TOGGLED, 

@@ -1,6 +1,6 @@
 import os
-from backend.core.models.File import File
-from backend.core.DEFAULTS import DEFAULT_COLOR, DEFAULT_TOGGLED, DEFAULT_SET_MANUALLY, DEFAULT_SET_MANUALLY_EMOJI, DEFAULT_EMOJI
+from swarm_debug.core.models.File import File
+from swarm_debug.core.DEFAULTS import DEFAULT_COLOR, DEFAULT_TOGGLED, DEFAULT_SET_MANUALLY, DEFAULT_SET_MANUALLY_EMOJI, DEFAULT_EMOJI
 
 class DebugFile(File):
     def __init__(self, filename, path, color=DEFAULT_COLOR, is_toggled=DEFAULT_TOGGLED, 

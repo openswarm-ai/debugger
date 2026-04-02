@@ -1,5 +1,5 @@
 import logging
-from backend.config.Apps import SubApp
+from swarm_debug.config.Apps import SubApp
 from contextlib import asynccontextmanager
 from fastapi.responses import PlainTextResponse
 from typeguard import typechecked

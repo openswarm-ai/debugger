@@ -1,10 +1,10 @@
 import re
 import inspect
 import os
-from backend.core.log.log_config import log_config
-from backend.core.Debugleton import Debugleton
-from backend.core.utils.color_adjuster import rgb_to_ansi, bold_and_italicize_text, hex_to_rgb
-from backend.core.utils.debug_arg_parser import is_text, is_error
+from swarm_debug.core.log.log_config import log_config
+from swarm_debug.core.Debugleton import Debugleton
+from swarm_debug.core.utils.color_adjuster import rgb_to_ansi, bold_and_italicize_text, hex_to_rgb
+from swarm_debug.core.utils.debug_arg_parser import is_text, is_error
 
 
 def debug(*args, mode: str = 'debug', override_max_chars: bool = False):

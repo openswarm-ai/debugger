@@ -1,11 +1,11 @@
 # Haik: sorry bout the filename
 
 import threading
-from backend.core.models.project_scanner import update_debug_toggles
-from backend.core.models.Directory import Directory
-from backend.core.models.DebugFile import DebugFile
-from backend.core.DEFAULTS import DEFAULT_COLOR, DEFAULT_TOGGLED, DEFAULT_EMOJI
-from backend.core.data_dir import NEEDS_RESYNC_FILE
+from swarm_debug.core.models.project_scanner import update_debug_toggles
+from swarm_debug.core.models.Directory import Directory
+from swarm_debug.core.models.DebugFile import DebugFile
+from swarm_debug.core.DEFAULTS import DEFAULT_COLOR, DEFAULT_TOGGLED, DEFAULT_EMOJI
+from swarm_debug.core.data_dir import NEEDS_RESYNC_FILE
 import os
 import time
 

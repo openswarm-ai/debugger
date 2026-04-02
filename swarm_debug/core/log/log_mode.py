@@ -1,5 +1,5 @@
 import os
-from backend.core.data_dir import LOG_MODE_FILE
+from swarm_debug.core.data_dir import LOG_MODE_FILE
 
 
 def set_log_mode(mode):
