@@ -23,7 +23,7 @@ All configuration is managed through a web GUI. No config files to write, no dec
 ### 1. Add `debug()` calls to your code
 
 ```python
-import debug
+from swarm_debug import debug
 
 x = 42
 debug(x)
@@ -43,7 +43,7 @@ Strings are rendered as italic labels. Everything else shows `name = value`. Err
 ### 2. Launch the GUI
 
 ```bash
-debug-server
+swarm-debug --gui
 ```
 
 Open [http://localhost:8324](http://localhost:8324). You'll see a file tree of your project showing every file that calls `debug()`. From there you can:
@@ -58,10 +58,10 @@ The server scans whichever directory you launched it from. To point it at a diff
 
 ```bash
 # Option A: cd into the project first
-cd /path/to/my/project && debug-server
+cd /path/to/my/project && swarm-debug --gui
 
 # Option B: set an env var
-SWARM_DEBUG_ROOT=/path/to/my/project debug-server
+SWARM_DEBUG_ROOT=/path/to/my/project swarm-debug --gui
 
 # Option C: use the API
 curl -X POST http://localhost:8324/api/debugger/root_dir \
@@ -140,7 +140,9 @@ bash frontend/run.sh   # Webpack dev server only
 
 ```
 debugger/
-├── debug.py                     # The debug() function -- pip module entry point
+├── swarm_debug/
+│   ├── __init__.py              # The debug() function
+│   └── cli.py                   # CLI entry point (swarm-debug --gui, --version)
 ├── pyproject.toml               # PyPI package config (swarm-debug)
 ├── publish.sh                   # Build + publish to PyPI
 ├── run.sh                       # Dev orchestrator: backend -> frontend
@@ -217,7 +219,7 @@ You'll need a PyPI account and API token. Configure `~/.pypirc` or pass credenti
 
 When installed from PyPI, the pre-built React frontend is bundled inside the wheel at `backend/debugger_gui_build/`. The FastAPI server serves these static files alongside the API, so end users get both the GUI and the API on a single port (8324) with zero Node.js dependency.
 
-The `debug` module uses a `sys.modules` trick to make itself callable -- `import debug` gives you a function, not a module. This means `debug(x)` works directly after import with no extra setup.
+Users import the `debug` function from the `swarm_debug` package: `from swarm_debug import debug`. The CLI (`swarm-debug --gui`) launches the server.
 
 ## License
 

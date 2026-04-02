@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "swarm-debug"
-version = "0.1.0"
+version = "0.1.3"
 description = "A colorized, toggleable debug logger with a web GUI"
 readme = "README.md"
 license = {text = "MIT"}
@@ -16,14 +16,14 @@ dependencies = [
 ]
 
 [project.scripts]
-debug-server = "backend.main:main"
+swarm-debug = "swarm_debug.cli:main"
 
 [project.optional-dependencies]
 dev = ["vulture"]
 
 [tool.setuptools]
-py-modules = ["debug"]
 packages = [
+    "swarm_debug",
     "backend",
     "backend.config",
     "backend.apps",

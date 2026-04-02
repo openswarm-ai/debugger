@@ -1,4 +1,6 @@
-const API_URL = 'http://localhost:6970/api';
+const DEV_API = 'http://localhost:6970/api';
+const PROD_API = '/api';
+const API_URL = process.env.NODE_ENV === 'production' ? PROD_API : DEV_API;
 
 export const PULL_STRUCTURE_URL = API_URL + '/debugger/pull_structure';
 export const PUSH_STRUCTURE_URL = API_URL + '/debugger/push_structure';

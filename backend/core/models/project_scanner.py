@@ -72,7 +72,8 @@ def update_debug_toggles(save_to_file=True) -> Directory:
         with open(TOGGLE_FILE, 'r', encoding='utf-8') as file:
             try:
                 json_data = json.load(file)
-                json_loaded_dir = Directory("")
+                if not json_data:
+                    raise ValueError("Empty toggle file")
                 json_loaded_dir = Directory(path="",
                                             color=json_data[0].get('color', DEFAULT_COLOR),
                                             is_toggled=json_data[0].get('is_toggled', DEFAULT_TOGGLED),
@@ -88,8 +89,8 @@ def update_debug_toggles(save_to_file=True) -> Directory:
                 # print("Json Children 2:")
                 # [print(child.path) for child in json_loaded_dir.children]
 
-            except json.JSONDecodeError:
-                ValueError("Error: JSON file could not be decoded.")
+            except (json.JSONDecodeError, ValueError, IndexError):
+                json_loaded_dir = None
     else:
         print("No JSON file found")
     # 1. Create a directory structure from the filesystem scan
