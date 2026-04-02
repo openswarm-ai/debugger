@@ -24,3 +24,6 @@ backend/debugger_gui_build/
 .idea/
 *.swp
 *.swo
+
+# PyPI
+.pypirc

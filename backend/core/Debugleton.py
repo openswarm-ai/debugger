@@ -5,10 +5,9 @@ from backend.core.models.project_scanner import update_debug_toggles
 from backend.core.models.Directory import Directory
 from backend.core.models.DebugFile import DebugFile
 from backend.core.DEFAULTS import DEFAULT_COLOR, DEFAULT_TOGGLED, DEFAULT_EMOJI
+from backend.core.data_dir import NEEDS_RESYNC_FILE
 import os
 import time
-
-NEEDS_RESYNC_FILE = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'needs_resync.txt')
 
 class Debugleton:
     _instance = None

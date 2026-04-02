@@ -3,14 +3,13 @@ import json
 import os
 from backend.config.Apps import SubApp
 from backend.core.models.project_scanner import update_debug_toggles, dir_to_output_format
+from backend.core.data_dir import NEEDS_RESYNC_FILE, TOGGLE_FILE as DEBUG_TOGGLE_FILE
+from backend.core.DEFAULTS import get_root_dir, set_root_dir
 from contextlib import asynccontextmanager
 from fastapi.responses import JSONResponse
 from typeguard import typechecked
 
 log = logging.getLogger(__name__)
-
-NEEDS_RESYNC_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'data', 'needs_resync.txt')
-DEBUG_TOGGLE_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'data', 'debug_toggles.json')
 
 
 @asynccontextmanager
@@ -62,3 +61,23 @@ async def reset_emoji() -> JSONResponse:
     scanned_dir.reset_emojis()
     output = dir_to_output_format(scanned_dir)
     return JSONResponse(content=output)
+
+
+@debugger.router.get("/root_dir")
+@typechecked
+async def get_root() -> JSONResponse:
+    log.info("GET /api/debugger/root_dir")
+    return JSONResponse(content={"root_dir": get_root_dir()})
+
+
+@debugger.router.post("/root_dir")
+@typechecked
+async def set_root(data: dict) -> JSONResponse:
+    log.info("POST /api/debugger/root_dir")
+    path = data.get("root_dir", "")
+    if not path or not os.path.isdir(path):
+        return JSONResponse(content={"error": "Invalid directory path"}, status_code=400)
+    set_root_dir(path)
+    with open(NEEDS_RESYNC_FILE, 'w') as f:
+        f.write('1')
+    return JSONResponse(content={"root_dir": get_root_dir()})

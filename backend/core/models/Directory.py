@@ -1,7 +1,7 @@
 import os
 import colorsys
 from backend.core.models.DebugFile import DebugFile
-from backend.core.DEFAULTS import DEFAULT_COLOR, DEFAULT_TOGGLED, DEFAULT_SET_MANUALLY, DEFAULT_SET_MANUALLY_EMOJI, DEFAULT_EMOJI, ROOT_DIR
+from backend.core.DEFAULTS import DEFAULT_COLOR, DEFAULT_TOGGLED, DEFAULT_SET_MANUALLY, DEFAULT_SET_MANUALLY_EMOJI, DEFAULT_EMOJI, get_root_dir
 from backend.core.utils.path_mngr import get_abspath, get_root_rel_path
 
 class Directory:
@@ -31,7 +31,7 @@ class Directory:
 
     def get_ordered_abspaths_and_instances(self):
         # print("[get_ordered_abspaths]: START")
-        root_dir = ROOT_DIR
+        root_dir = get_root_dir()
         # print(f"[get_ordered_abspaths]: Curr path: {curr_file_path}")
         # print(f"[get_ordered_abspaths]:  Dir path: {root_dir}")
         def construct_ordered_abspaths(dir: Directory, ordered_abspaths: list):

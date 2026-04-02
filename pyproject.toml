@@ -3,7 +3,7 @@ requires = ["setuptools>=68.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "openswarm-debug"
+name = "swarm-debug"
 version = "0.1.0"
 description = "A colorized, toggleable debug logger with a web GUI"
 readme = "README.md"
@@ -30,7 +30,10 @@ packages = [
     "backend.apps.health",
     "backend.apps.debugger",
     "backend.core",
+    "backend.core.models",
+    "backend.core.log",
+    "backend.core.utils",
 ]
 
 [tool.setuptools.package-data]
-backend = ["debugger_gui_build/**/*", "debug_toggles.json", "log_mode.txt", "needs_resync.txt"]
+backend = ["debugger_gui_build/**/*"]

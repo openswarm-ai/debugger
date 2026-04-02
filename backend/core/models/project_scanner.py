@@ -3,7 +3,7 @@ import json
 import colorsys
 from typing import Union
 from backend.core.models.Directory import Directory
-from backend.core.DEFAULTS import DEFAULT_COLOR, DEFAULT_TOGGLED, DEFAULT_SET_MANUALLY, DEFAULT_SET_MANUALLY_EMOJI, TOGGLE_FILE, DEFAULT_EMOJI, ROOT_DIR
+from backend.core.DEFAULTS import DEFAULT_COLOR, DEFAULT_TOGGLED, DEFAULT_SET_MANUALLY, DEFAULT_SET_MANUALLY_EMOJI, TOGGLE_FILE, DEFAULT_EMOJI
 from backend.core.models.DebugFile import DebugFile
 from collections import OrderedDict
 
