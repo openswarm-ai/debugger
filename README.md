@@ -44,9 +44,10 @@ Strings are rendered as italic labels. Everything else shows `name = value`. Err
 
 ```bash
 swarm-debug --gui
+swarm-debug --gui --port 8080   # custom port
 ```
 
-Open [http://localhost:8324](http://localhost:8324). You'll see a file tree of your project showing every file that calls `debug()`. From there you can:
+Your browser opens automatically to [http://localhost:6969](http://localhost:6969). You'll see a file tree of your project showing every file that calls `debug()`. From there you can:
 
 - Toggle files/directories on and off
 - Assign custom colors per file or directory (children inherit from parents)
@@ -64,7 +65,7 @@ cd /path/to/my/project && swarm-debug --gui
 SWARM_DEBUG_ROOT=/path/to/my/project swarm-debug --gui
 
 # Option C: use the API
-curl -X POST http://localhost:8324/api/debugger/root_dir \
+curl -X POST http://localhost:6969/api/debugger/root_dir \
   -H "Content-Type: application/json" \
   -d '{"root_dir": "/path/to/my/project"}'
 ```
@@ -94,7 +95,7 @@ All runtime state lives in `~/.swarm-debug/`:
 | GET | `/api/debugger/root_dir` | Get current project root |
 | POST | `/api/debugger/root_dir` | Set project root (triggers resync) |
 
-Full interactive docs at [http://localhost:8324/docs](http://localhost:8324/docs).
+Full interactive docs at [http://localhost:6969/docs](http://localhost:6969/docs).
 
 ---
 
@@ -107,7 +108,7 @@ Full interactive docs at [http://localhost:8324/docs](http://localhost:8324/docs
 
 ### Running locally
 
-Both services (backend on `:8324`, frontend dev server on `:3000`):
+Both services (backend on `:6970`, frontend dev server on `:6969`):
 
 ```bash
 bash run.sh
@@ -217,7 +218,7 @@ You'll need a PyPI account and API token. Configure `~/.pypirc` or pass credenti
 
 ### How the pip package works
 
-When installed from PyPI, the pre-built React frontend is bundled inside the wheel at `backend/debugger_gui_build/`. The FastAPI server serves these static files alongside the API, so end users get both the GUI and the API on a single port (8324) with zero Node.js dependency.
+When installed from PyPI, the pre-built React frontend is bundled inside the wheel at `backend/debugger_gui_build/`. The FastAPI server serves these static files alongside the API, so end users get both the GUI and the API on a single port (default 6969) with zero Node.js dependency.
 
 Users import the `debug` function from the `swarm_debug` package: `from swarm_debug import debug`. The CLI (`swarm-debug --gui`) launches the server.
 

@@ -2,6 +2,9 @@ import argparse
 import sys
 
 
+DEFAULT_PORT = 6969
+
+
 def main():
     parser = argparse.ArgumentParser(
         prog="swarm-debug",
@@ -10,7 +13,13 @@ def main():
     parser.add_argument(
         "--gui",
         action="store_true",
-        help="Launch the debug configuration GUI (serves on http://localhost:8324)",
+        help="Launch the debug configuration GUI",
+    )
+    parser.add_argument(
+        "--port", "-p",
+        type=int,
+        default=DEFAULT_PORT,
+        help=f"Port for the GUI server (default: {DEFAULT_PORT})",
     )
     parser.add_argument(
         "--version",
@@ -21,8 +30,8 @@ def main():
     args = parser.parse_args()
 
     if args.gui:
-        from backend.main import main as start_server
-        start_server()
+        from backend.main import start_server
+        start_server(port=args.port, open_browser=True)
     else:
         parser.print_help()
         sys.exit(0)

@@ -31,9 +31,17 @@ if os.path.isdir(BUILD_DIR):
     app.mount("/", StaticFiles(directory=BUILD_DIR, html=True), name="gui")
 
 
-def main():
-    port = int(os.environ.get("BACKEND_PORT", 8324))
+def start_server(port: int = 6969, open_browser: bool = False):
+    if open_browser:
+        import threading
+        import webbrowser
+        threading.Timer(1.0, lambda: webbrowser.open(f"http://localhost:{port}")).start()
     uvicorn.run("backend.main:app", host="0.0.0.0", port=port, reload=False)
+
+
+def main():
+    port = int(os.environ.get("BACKEND_PORT", 6969))
+    start_server(port=port)
 
 
 if __name__ == "__main__":
