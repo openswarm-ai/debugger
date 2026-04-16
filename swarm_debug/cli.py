@@ -181,6 +181,7 @@ def main():
     parser = argparse.ArgumentParser(
         prog="swarm-debug",
         description="A colorized, toggleable debug logger with a web GUI and CLI.",
+        epilog="Run 'swarm-debug <command> --help' for more info on a specific command.",
         add_help=False,
     )
     parser.add_argument(

@@ -70,11 +70,11 @@ curl -X POST http://localhost:6969/api/debugger/root_dir \
   -d '{"root_dir": "/path/to/my/project"}'
 ```
 
-The root dir persists across restarts (saved to `~/.swarm-debug/root_dir.txt`).
+The root dir persists across restarts (saved per-project to `~/.swarm-debug/projects/<hash>/root_dir.txt`).
 
 ### Configuration storage
 
-All runtime state lives in `~/.swarm-debug/`:
+All runtime state lives in `~/.swarm-debug/projects/<hash>/` (where `<hash>` is the first 16 chars of the SHA-256 of the project root path):
 
 | File | Purpose |
 |------|---------|

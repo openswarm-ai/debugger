@@ -10,6 +10,13 @@ description: >-
 
 A non-invasive debug logger for Python. You add `debug()` calls to code; visibility is controlled per-file via CLI or GUI without modifying source.
 
+## CRITICAL: Always use the CLI, never read raw files
+
+- **NEVER** read `~/.swarm-debug/projects/<hash>/debug_toggles.json` directly with `cat`, `head`, `tail`, `read`, or any file tool. The raw JSON is an internal per-project cache and may be stale or inconsistent with the actual codebase.
+- **ALWAYS** use `swarm-debug status` or `swarm-debug status --json` to inspect state. The CLI rescans for `debug(` calls and returns the true resolved state.
+- If `swarm-debug` is not on PATH, run it via `python -m swarm_debug` or locate it with `which swarm-debug` / `pip show swarm-debug`. Do **NOT** fall back to reading the raw JSON file.
+- **NEVER** write to `debug_toggles.json` directly (stored per-project under `~/.swarm-debug/projects/<hash>/`). Use `swarm-debug toggle`, `swarm-debug set-color`, `swarm-debug set-emoji`, etc.
+
 ## Adding debug statements
 
 ```python
@@ -51,15 +58,15 @@ swarm-debug gui --port 8080
 ## Typical workflow
 
 1. **Instrument**: Add `debug()` calls to files you want to observe.
-2. **Set root**: `swarm-debug set-root /path/to/project` (only needed once; persisted in `~/.swarm-debug/root_dir.txt`).
+2. **Set root**: `swarm-debug set-root /path/to/project` (only needed once; persisted in `~/.swarm-debug/projects/<hash>/root_dir.txt`).
 3. **Toggle on** the files you care about: `swarm-debug toggle on src/core/engine.py`.
 4. **Run** the program -- only toggled-on files produce debug output.
 5. **Toggle off** when done: `swarm-debug toggle off src/core/engine.py`.
 
 ## How it works
 
-- State lives in `~/.swarm-debug/debug_toggles.json` (a tree of files with `is_toggled`, `color`, `emoji` per node).
-- The CLI and GUI both read/write this same file.
+- Internal state is cached per-project in `~/.swarm-debug/projects/<hash>/debug_toggles.json` (where `<hash>` is derived from the project root path), but this file should never be read or written directly. Always use the CLI commands to inspect or modify state.
+- The CLI and GUI both read/write through the same underlying store.
 - After any CLI/GUI change, a `needs_resync.txt` flag is set. The next `debug()` call in the running program reloads the config automatically -- no restart needed.
 - Only `.py` files that contain `debug(` calls appear in the tree.
 
