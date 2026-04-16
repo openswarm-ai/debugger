@@ -1,6 +1,6 @@
 import re
 
-DEBUG_KWARGS = {'mode', 'override_max_chars', 'sep', 'end'}
+DEBUG_KWARGS = {'mode', 'override_max_chars', 'sep', 'end', 'pretty', 'lang', 'table'}
 
 _PERCENT_FORMAT_RE = re.compile(r'%[-+0#]*(\*|\d+)(\.\*|\.\d+)?[diouxXeEfFgGcrsab]|%[-+0#]*(\.\*|\.\d+)[diouxXeEfFgGcrsab]|%[diouxXeEfFgGcrsab]|%%')
 

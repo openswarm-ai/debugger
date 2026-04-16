@@ -36,13 +36,55 @@ Before running **any** `swarm-debug` command, you must find the environment that
 ```python
 from swarm_debug import debug
 
-debug(my_var)           # prints: [func_name] : my_var = <value>
+debug(my_var)           # prints: [func_name] : my_var: int = 42
 debug("checkpoint")     # prints: [func_name] : checkpoint  (italic)
 debug(err)              # errors auto-force ON with red output
 debug("x=%s y=%s", x, y)  # %-style formatting
 ```
 
 `debug()` inspects the call stack to extract the caller's file, function, variable names, and indentation. No format strings or manual labels needed -- pass variables directly.
+
+### Rich output features
+
+All output is rendered with Rich. Function names in the output are clickable file links (in terminals that support OSC 8 hyperlinks like iTerm2 and Windows Terminal). Type annotations are shown in dim text for non-string values.
+
+**Pretty-printed data structures** (on by default):
+```python
+debug(my_dict)          # dicts, lists, sets, dataclasses are pretty-printed with Rich
+debug(my_dict, pretty=False)  # opt out for flat single-line output
+```
+
+**Syntax-highlighted strings** (explicit lang= kwarg):
+```python
+debug(sql_query, lang="sql")       # SQL keyword highlighting
+debug(json_string, lang="json")    # JSON syntax coloring
+debug(html_body, lang="html")      # HTML highlighting
+```
+
+**Table layout** (auto: on when >1 non-text data args, off otherwise):
+```python
+debug(x, y, z)               # 3 data args → table with Name | Type | Value columns
+debug(x)                     # single arg → inline output (no table)
+debug("msg", x)              # 1 text + 1 data arg → inline (only 1 data arg)
+debug("msg", x, y)           # 1 text + 2 data args → table
+debug(x, y, z, table=False)  # force per-line output
+debug(x, table=True)         # force table even for a single arg
+```
+
+**Diff output** -- compare two values with a unified diff:
+```python
+debug.diff(old_state, new_state)                # default label "diff"
+debug.diff(old_state, new_state, label="state") # custom label
+```
+
+**Timing** -- measure how long a block takes:
+```python
+with debug.time("database query"):
+    result = db.execute(query)
+# prints: [func] : ⏱ database query took 0.123s  (green/yellow/red based on duration)
+```
+
+**Indent group markers**: when indentation level changes between `debug()` calls, a visual rule line is emitted to mark the group boundary.
 
 ## CLI reference
 
