@@ -162,16 +162,15 @@ def _uninstall_cursor_skill():
     print(f"Cursor skill removed: {dst_dir}")
 
 
-def _print_boxed_notice(lines):
-    """Print a styled box with red border and bold text to stderr."""
-    RED = "\033[31m"
+def _print_boxed_notice(lines, *, color="\033[31m"):
+    """Print a styled box with colored border and bold text to stderr."""
     BOLD = "\033[1m"
     RESET = "\033[0m"
 
     inner_width = max(len(line) for line in lines) + 2
-    top = f"{RED}╭{'─' * inner_width}╮{RESET}"
-    bot = f"{RED}╰{'─' * inner_width}╯{RESET}"
-    mid = [f"{RED}│{RESET} {BOLD}{line.ljust(inner_width - 2)}{RESET} {RED}│{RESET}" for line in lines]
+    top = f"{color}╭{'─' * inner_width}╮{RESET}"
+    bot = f"{color}╰{'─' * inner_width}╯{RESET}"
+    mid = [f"{color}│{RESET} {BOLD}{line.ljust(inner_width - 2)}{RESET} {color}│{RESET}" for line in lines]
 
     print(file=sys.stderr)
     print(top, file=sys.stderr)
@@ -207,7 +206,7 @@ def _check_package_staleness(current_version: str):
                 f"⚠  A newer swarm-debug is available: {latest}",
                 f"   You are running: {current_version}",
                 f"   Run: pip install --upgrade swarm-debug",
-            ])
+            ], color="\033[33m")
     except (urllib.error.URLError, TimeoutError, KeyError,
             json.JSONDecodeError, InvalidVersion, OSError):
         pass
