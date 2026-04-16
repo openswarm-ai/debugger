@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import json
 import os
@@ -7,6 +8,7 @@ from swarm_debug.core.data_dir import get_data_file
 from swarm_debug.core.DEFAULTS import get_root_dir, set_root_dir
 from contextlib import asynccontextmanager
 from fastapi.responses import JSONResponse
+from starlette.responses import StreamingResponse
 from typeguard import typechecked
 
 log = logging.getLogger(__name__)
@@ -64,6 +66,25 @@ async def reset_emoji() -> JSONResponse:
     scanned_dir.reset_emojis()
     output = dir_to_output_format(scanned_dir)
     return JSONResponse(content=output)
+
+
+@debugger.router.get("/events")
+async def events():
+    toggle_file = get_data_file("debug_toggles.json", get_root_dir())
+
+    async def event_stream():
+        last_mtime = os.path.getmtime(toggle_file)
+        while True:
+            await asyncio.sleep(1)
+            try:
+                current_mtime = os.path.getmtime(toggle_file)
+            except OSError:
+                continue
+            if current_mtime > last_mtime:
+                last_mtime = current_mtime
+                yield 'data: {"type": "resync"}\n\n'
+
+    return StreamingResponse(event_stream(), media_type="text/event-stream")
 
 
 @debugger.router.get("/root_dir")

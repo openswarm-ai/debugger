@@ -7,6 +7,7 @@ import { motion } from 'framer-motion';
 import { useClaudeTokens } from '@/shared/styles/ThemeContext';
 import { useAppDispatch, useAppSelector } from '@/shared/hooks';
 import { pullWithRetry, pushStructure, setSaveStatus, expandAll, collapseAll } from '@/shared/state/debuggerSlice';
+import { EVENTS_URL } from '@/shared/state/API_ENDPOINTS';
 import OpenInFullIcon from '@mui/icons-material/OpenInFull';
 import CloseFullscreenIcon from '@mui/icons-material/CloseFullscreen';
 import DebuggerHeader from '@/app/pages/Debugger/DebuggerHeader';
@@ -29,9 +30,21 @@ const Debugger: React.FC = () => {
 
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const dirtyRef = useRef(dirty);
+  dirtyRef.current = dirty;
 
   useEffect(() => {
     dispatch(pullWithRetry());
+  }, [dispatch]);
+
+  useEffect(() => {
+    const es = new EventSource(EVENTS_URL);
+    es.onmessage = () => {
+      if (!dirtyRef.current) {
+        dispatch(pullWithRetry());
+      }
+    };
+    return () => es.close();
   }, [dispatch]);
 
   useEffect(() => {
