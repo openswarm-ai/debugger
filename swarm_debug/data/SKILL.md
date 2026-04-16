@@ -8,7 +8,7 @@ description: >-
 
 # swarm-debug
 
-A non-invasive debug logger for Python. You add `debug()` calls to code; visibility is controlled per-file via CLI or GUI without modifying source.
+AAA non-invasive debug logger for Python. You add `debug()` calls to code; visibility is controlled per-file via CLI or GUI without modifying source.
 
 ## Adding debug statements
 

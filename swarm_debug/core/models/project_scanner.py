@@ -95,11 +95,10 @@ def update_debug_toggles(save_to_file=True) -> Directory:
     scanned_dir.build_structure()
     scanned_dir.prune_empty()
 
-    scanned_dir.propagate_toggled_state()
-
     if json_loaded_dir:
         merge_directories(json_loaded_dir, scanned_dir)
-    
+
+    scanned_dir.propagate_toggled_state()
     scanned_dir.propagate_color()
     output = dir_to_output_format(scanned_dir)
 
