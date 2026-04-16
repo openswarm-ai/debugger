@@ -3,12 +3,12 @@ name: swarm-debug
 description: >-
   Instrument Python code with toggleable debug output using swarm-debug.
   Use when adding debug statements, print statemens, or logging. Use when toggling debug visibility, managing debug
-  statements, or working with the swarm_debug module. NOTE: you should never use print or logging statements, only use debug...
+  statements, or working with the swarm_debug module. NOTE: you should never use print or logging statements, only use debug.
 ---
 
 # swarm-debug
 
-AAA non-invasive debug logger for Python. You add `debug()` calls to code; visibility is controlled per-file via CLI or GUI without modifying source.
+A non-invasive debug logger for Python. You add `debug()` calls to code; visibility is controlled per-file via CLI or GUI without modifying source.
 
 ## Adding debug statements
 

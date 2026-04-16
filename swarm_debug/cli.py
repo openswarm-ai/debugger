@@ -8,6 +8,22 @@ from pathlib import Path
 
 
 DEFAULT_PORT = 6969
+
+
+class _StalenessCheckVersionAction(argparse._VersionAction):
+    """Show staleness notice before printing version and exiting."""
+    def __call__(self, parser, namespace, values, option_string=None):
+        _check_skill_staleness()
+        super().__call__(parser, namespace, values, option_string)
+
+
+class _StalenessCheckHelpAction(argparse._HelpAction):
+    """Show staleness notice before printing help and exiting."""
+    def __call__(self, parser, namespace, values, option_string=None):
+        _check_skill_staleness()
+        super().__call__(parser, namespace, values, option_string)
+
+
 _SKILL_SRC = Path(__file__).resolve().parent / "data" / "SKILL.md"
 _SKILL_DST_DIR = Path.home() / ".cursor" / "skills" / "swarm-debug"
 _SKILL_DST = _SKILL_DST_DIR / "SKILL.md"
@@ -130,15 +146,33 @@ def _uninstall_cursor_skill():
     print(f"Cursor skill removed: {_SKILL_DST_DIR}")
 
 
+def _print_boxed_notice(lines):
+    """Print a styled box with red border and bold text to stderr."""
+    RED = "\033[31m"
+    BOLD = "\033[1m"
+    RESET = "\033[0m"
+
+    inner_width = max(len(line) for line in lines) + 2
+    top = f"{RED}╭{'─' * inner_width}╮{RESET}"
+    bot = f"{RED}╰{'─' * inner_width}╯{RESET}"
+    mid = [f"{RED}│{RESET} {BOLD}{line.ljust(inner_width - 2)}{RESET} {RED}│{RESET}" for line in lines]
+
+    print(file=sys.stderr)
+    print(top, file=sys.stderr)
+    for row in mid:
+        print(row, file=sys.stderr)
+    print(bot, file=sys.stderr)
+    print(file=sys.stderr)
+
+
 def _check_skill_staleness():
     """Warn if the installed Cursor skill is outdated compared to the bundled one."""
     if _SKILL_DST.exists() and _SKILL_SRC.exists():
         if not filecmp.cmp(_SKILL_SRC, _SKILL_DST, shallow=False):
-            print(
-                "Notice: your Cursor skill is out of date. "
-                "Run: swarm-debug --install-cursor-skill",
-                file=sys.stderr,
-            )
+            _print_boxed_notice([
+                "⚠  Your Cursor skill is out of date.",
+                "   Run: swarm-debug --install-cursor-skill",
+            ])
 
 
 def main():
@@ -147,9 +181,15 @@ def main():
     parser = argparse.ArgumentParser(
         prog="swarm-debug",
         description="A colorized, toggleable debug logger with a web GUI and CLI.",
+        add_help=False,
     )
     parser.add_argument(
-        "--version", action="version", version=f"swarm-debug {pkg_version}"
+        "-h", "--help", action=_StalenessCheckHelpAction,
+        default=argparse.SUPPRESS, help="show this help message and exit",
+    )
+    parser.add_argument(
+        "--version", action=_StalenessCheckVersionAction,
+        version=f"swarm-debug {pkg_version}",
     )
     parser.add_argument(
         "--install-cursor-skill", action="store_true",
