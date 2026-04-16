@@ -46,6 +46,26 @@ def _skill_dst() -> Path:
     return _skill_dst_dir() / "SKILL.md"
 
 
+def _is_cursor_environment() -> bool:
+    from swarm_debug.core.DEFAULTS import get_root_dir
+    if (Path(get_root_dir()) / ".cursor").is_dir():
+        return True
+    for key in ("VSCODE_GIT_ASKPASS_NODE", "VSCODE_GIT_ASKPASS_MAIN", "GIT_ASKPASS"):
+        if "cursor" in os.environ.get(key, "").lower():
+            return True
+    return False
+
+
+def _check_skill_not_installed():
+    if _is_cursor_environment() and not _skill_dst().exists():
+        _err_console.print(Panel(
+            "[bold]You're using Cursor but haven't installed the swarm-debug skill.[/bold]\n"
+            "Run: [cyan]swarm-debug install-cursor-skill[/cyan]",
+            title="Skill Not Installed",
+            border_style="yellow",
+        ))
+
+
 def _check_skill_staleness():
     dst = _skill_dst()
     if dst.exists() and _SKILL_SRC.exists():
@@ -81,6 +101,7 @@ def _check_package_staleness(current_version: str):
 
 
 def _check_all_staleness(current_version: str):
+    _check_skill_not_installed()
     _check_skill_staleness()
     _check_package_staleness(current_version)
 
@@ -334,13 +355,17 @@ def install_cursor_skill():
             _console.print(Panel(f"[bold yellow]Cursor skill is already up to date:[/bold yellow] [dim]{dst}[/dim]"))
             return
         shutil.copy2(_SKILL_SRC, dst)
-        _console.print(f"Cursor skill [green]updated[/green]: {dst}")
+        action = "updated"
     else:
         dst_dir.mkdir(parents=True, exist_ok=True)
         shutil.copy2(_SKILL_SRC, dst)
-        _console.print(f"Cursor skill [green]installed[/green]: {dst}")
+        action = "installed"
 
-    _console.print("[dim]Tip: this will be kept in sync automatically whenever you use any swarm-debug command.[/dim]")
+    _console.print(Panel(
+        f"[green]Cursor skill {action}[/green]: {dst}\n"
+        "[yellow]Tip:[/yellow] [dim]this will be kept in sync automatically whenever you use any swarm-debug command.[/dim]",
+        border_style="green",
+    ))
 
 
 @app.command("uninstall-cursor-skill")
@@ -352,9 +377,14 @@ def uninstall_cursor_skill():
         _console.print(Panel("[red]Cursor skill is not installed, nothing to remove.[/red]"))
         return
 
-    typer.confirm("Remove the Cursor skill?", abort=True)
+    typer.confirm("Remove the Cursor skill?", default=True, abort=True)
     shutil.rmtree(dst_dir)
-    _console.print(f"Cursor skill [red]removed[/red]: {dst_dir}")
+    for parent in (dst_dir.parent, dst_dir.parent.parent):
+        try:
+            parent.rmdir()
+        except OSError:
+            break
+    _console.print(Panel(f"[red]Cursor skill removed[/red]: {dst_dir}"))
 
 
 @app.command()

@@ -33,17 +33,27 @@ if os.path.isdir(BUILD_DIR):
     app.mount("/", StaticFiles(directory=BUILD_DIR, html=True), name="gui")
 
 
-def _wait_for_server(port: int, timeout: float = 10.0) -> bool:
-    """Poll the health endpoint with a Rich progress bar until the server is ready."""
+def _wait_for_server(port: int, timeout: float = 10.0, show_progress: bool = True) -> bool:
+    """Poll the health endpoint until the server is ready."""
     import time
     import urllib.request
+
+    url = f"http://127.0.0.1:{port}/api/health/check"
+    start = time.monotonic()
+
+    if not show_progress:
+        while time.monotonic() - start < timeout:
+            try:
+                with urllib.request.urlopen(url, timeout=1):
+                    return True
+            except (urllib.error.URLError, OSError, ConnectionError):
+                time.sleep(0.2)
+        return False
+
     from rich.console import Console
     from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn, TimeElapsedColumn
 
     console = Console(color_system="truecolor")
-    url = f"http://127.0.0.1:{port}/api/health/check"
-    start = time.monotonic()
-
     with Progress(
         SpinnerColumn(),
         TextColumn("[bold]Starting server…"),
@@ -65,14 +75,64 @@ def _wait_for_server(port: int, timeout: float = 10.0) -> bool:
     return False
 
 
+def _print_starting_panel(console, port: int):
+    from rich.panel import Panel
+    console.print(Panel(
+        f"[dim]Starting on port[/dim] [bold]{port}[/bold][dim]…[/dim]",
+        title="[bold]swarm-debug[/bold]",
+        border_style="bright_cyan",
+    ))
+
+
+def _print_ready_panel(console, port: int):
+    from rich.panel import Panel
+    from rich.text import Text
+
+    panel_content = Text.from_markup(
+        f"[bold cyan]swarm-debug[/bold cyan] GUI server\n"
+        f"[dim]Port:[/dim] {port}  "
+        f"[dim]Docs:[/dim] http://127.0.0.1:{port}/docs\n"
+        f"[dim]Press Ctrl+C to quit[/dim]"
+    )
+    console.print(Panel(panel_content, title="[bold]swarm-debug[/bold]", border_style="bright_cyan"))
+
+
 def start_server(port: int = 6969, open_browser: bool = False, verbose: bool = False):
+    import asyncio
+    import threading
+    import webbrowser
+    from rich.console import Console
+
+    console = Console(color_system="truecolor")
+
     if verbose:
         os.environ["SWARM_DEBUG_VERBOSE"] = "1"
-        if open_browser:
-            import threading
-            import webbrowser
-            threading.Timer(1.0, lambda: webbrowser.open(f"http://localhost:{port}")).start()
-        uvicorn.run("swarm_debug.server:app", host="0.0.0.0", port=port, reload=False)
+        _print_starting_panel(console, port)
+
+        config = uvicorn.Config(
+            "swarm_debug.server:app", host="0.0.0.0", port=port, reload=False,
+        )
+        server = uvicorn.Server(config)
+
+        server_thread = threading.Thread(
+            target=lambda: asyncio.run(server.serve()), daemon=True,
+        )
+        server_thread.start()
+
+        if _wait_for_server(port, show_progress=False):
+            _print_ready_panel(console, port)
+            if open_browser:
+                webbrowser.open(f"http://localhost:{port}")
+        else:
+            console.print("[red bold]✘[/red bold] Server failed to start within timeout")
+            return
+
+        try:
+            server_thread.join()
+        except KeyboardInterrupt:
+            console.print("\n[dim]Shutting down…[/dim]")
+            server.should_exit = True
+            server_thread.join(timeout=5)
         return
 
     os.environ["SWARM_DEBUG_VERBOSE"] = "0"
@@ -82,22 +142,7 @@ def start_server(port: int = 6969, open_browser: bool = False, verbose: bool = F
     for h in root.handlers:
         h.setLevel(logging.CRITICAL)
 
-    import asyncio
-    import threading
-    import webbrowser
-    from rich.console import Console
-    from rich.panel import Panel
-    from rich.text import Text
-
-    console = Console(color_system="truecolor")
-
-    panel_content = Text.from_markup(
-        f"[bold cyan]swarm-debug[/bold cyan] GUI server\n"
-        f"[dim]Port:[/dim] {port}  "
-        f"[dim]Docs:[/dim] http://127.0.0.1:{port}/docs\n"
-        f"[dim]Press Ctrl+C to quit[/dim]"
-    )
-    console.print(Panel(panel_content, title="[bold]swarm-debug[/bold]", border_style="bright_cyan"))
+    _print_starting_panel(console, port)
 
     config = uvicorn.Config(
         "swarm_debug.server:app",
@@ -109,13 +154,12 @@ def start_server(port: int = 6969, open_browser: bool = False, verbose: bool = F
     server = uvicorn.Server(config)
 
     server_thread = threading.Thread(
-        target=lambda: asyncio.run(server.serve()),
-        daemon=True,
+        target=lambda: asyncio.run(server.serve()), daemon=True,
     )
     server_thread.start()
 
     if _wait_for_server(port):
-        console.print(f"[green bold]✔[/green bold] Server ready at [link=http://localhost:{port}]http://localhost:{port}[/link]")
+        _print_ready_panel(console, port)
         if open_browser:
             webbrowser.open(f"http://localhost:{port}")
             console.print("[green bold]✔[/green bold] Browser opened")
