@@ -1,5 +1,6 @@
 import argparse
 import sys
+from importlib.metadata import version
 
 
 DEFAULT_PORT = 6969
@@ -24,7 +25,7 @@ def main():
     parser.add_argument(
         "--version",
         action="version",
-        version="swarm-debug 0.1.0",
+        version=f"swarm-debug {version('swarm-debug')}",
     )
 
     args = parser.parse_args()
