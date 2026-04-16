@@ -45,6 +45,71 @@ if ! python3 -m twine --version &>/dev/null 2>&1; then
     exit 1
 fi
 
+# ── Version gate ──────────────────────────────────────────────
+LOCAL_VERSION=$(python3 -c "
+import re, pathlib
+text = pathlib.Path('$ROOT_DIR/pyproject.toml').read_text()
+m = re.search(r'^version\s*=\s*\"([^\"]+)\"', text, re.MULTILINE)
+print(m.group(1))
+")
+
+if [ "$TARGET" = "test" ]; then
+    PYPI_URL="https://test.pypi.org/pypi/swarm-debug/json"
+else
+    PYPI_URL="https://pypi.org/pypi/swarm-debug/json"
+fi
+
+PYPI_VERSION=$(python3 -c "
+import json, urllib.request
+data = json.loads(urllib.request.urlopen('$PYPI_URL').read())
+print(data['info']['version'])
+" 2>/dev/null || echo "")
+
+if [ -z "$PYPI_VERSION" ]; then
+    echo "⚠  Could not fetch PyPI version. Continuing with local version $LOCAL_VERSION."
+else
+    echo "Local version:  $LOCAL_VERSION"
+    echo "PyPI version:   $PYPI_VERSION"
+
+    if [ "$LOCAL_VERSION" = "$PYPI_VERSION" ]; then
+        NEXT_VERSION=$(python3 -c "
+parts = '$LOCAL_VERSION'.split('.')
+parts[-1] = str(int(parts[-1]) + 1)
+print('.'.join(parts))
+")
+        echo ""
+        echo "Version $LOCAL_VERSION is already published."
+        echo "Suggested bump: $LOCAL_VERSION -> $NEXT_VERSION"
+        echo ""
+        read -rp "Approve version bump to $NEXT_VERSION? [Y/n] " answer
+        case "$answer" in
+            [nN]|[nN][oO])
+                echo "Aborted."
+                exit 0
+                ;;
+            *)
+                python3 -c "
+import pathlib, re
+p = pathlib.Path('$ROOT_DIR/pyproject.toml')
+text = p.read_text()
+text = re.sub(
+    r'^(version\s*=\s*\")([^\"]+)(\")',
+    r'\g<1>${NEXT_VERSION}\3',
+    text,
+    count=1,
+    flags=re.MULTILINE,
+)
+p.write_text(text)
+"
+                LOCAL_VERSION="$NEXT_VERSION"
+                echo "Updated pyproject.toml to $LOCAL_VERSION."
+                ;;
+        esac
+    else
+        echo "Version $LOCAL_VERSION differs from published ($PYPI_VERSION). Proceeding."
+    fi
+fi
+
 # ── Clean previous artifacts ─────────────────────────────────
 echo "Cleaning previous build artifacts..."
 rm -rf "$ROOT_DIR/dist" \
