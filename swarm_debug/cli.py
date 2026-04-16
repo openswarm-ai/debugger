@@ -3,6 +3,9 @@ import filecmp
 import json
 import os
 import shutil
+import subprocess
+import sys
+import time
 import urllib.request
 from importlib.metadata import version as pkg_version
 from pathlib import Path
@@ -91,7 +94,7 @@ def _check_package_staleness(current_version: str):
             _err_console.print(Panel(
                 f"[bold]A newer swarm-debug is available: [green]{latest}[/green][/bold]\n"
                 f"You are running: [red]{current_version}[/red]\n"
-                "Run: [cyan]pip install --upgrade swarm-debug[/cyan]",
+                "Run: [cyan]swarm-debug --upgrade[/cyan]",
                 title="Update Available",
                 border_style="yellow",
             ))
@@ -119,6 +122,73 @@ def _version_callback(value: bool):
         _check_all_staleness(ver)
         _console.print(f"swarm-debug {ver}")
         raise typer.Exit()
+
+
+def _fetch_latest_version() -> str:
+    """Fetch the latest version string from PyPI's JSON API."""
+    url = "https://pypi.org/pypi/swarm-debug/json"
+    req = urllib.request.Request(url, headers={"Accept": "application/json"})
+    with urllib.request.urlopen(req, timeout=10) as resp:
+        data = json.loads(resp.read())
+    return data["info"]["version"]
+
+
+def _upgrade_callback(value: bool):
+    if not value:
+        return
+
+    old_ver = _get_version()
+    _console.print(f"[bold]Upgrading swarm-debug[/bold] (current: {old_ver})…")
+
+    try:
+        latest = _fetch_latest_version()
+    except (urllib.error.URLError, TimeoutError, KeyError,
+            json.JSONDecodeError, OSError) as exc:
+        _err_console.print(Panel(
+            f"[bold red]Could not reach PyPI[/bold red]\n{exc}",
+            border_style="red",
+        ))
+        raise typer.Exit(code=1)
+
+    if latest == old_ver:
+        _console.print(Panel(
+            f"[bold]Already up to date:[/bold] swarm-debug {old_ver}",
+            border_style="green",
+        ))
+        raise typer.Exit()
+
+    _console.print(f"  Installing swarm-debug==[bold]{latest}[/bold] …")
+
+    pip_cmd = [sys.executable, "-m", "pip", "install", "--no-cache-dir", f"swarm-debug=={latest}"]
+    max_attempts = 4
+    delays = [5, 10, 20]
+
+    for attempt in range(1, max_attempts + 1):
+        result = subprocess.run(pip_cmd, capture_output=True, text=True)
+
+        if result.returncode == 0:
+            break
+
+        if attempt < max_attempts and "No matching distribution" in result.stderr:
+            wait = delays[attempt - 1]
+            _console.print(
+                f"  [yellow]Version {latest} not yet available on the CDN. "
+                f"Retrying in {wait}s ({attempt}/{max_attempts})…[/yellow]"
+            )
+            time.sleep(wait)
+        else:
+            _err_console.print(Panel(
+                f"[bold red]Upgrade failed[/bold red]\n{result.stderr.strip()}",
+                border_style="red",
+            ))
+            raise typer.Exit(code=1)
+
+    _console.print(Panel(
+        f"[bold green]Upgraded![/bold green] {old_ver} → {latest}",
+        border_style="green",
+    ))
+
+    raise typer.Exit()
 
 
 def _help_all_callback(ctx: typer.Context, value: bool):
@@ -204,6 +274,10 @@ def _callback(
     version: bool = typer.Option(
         False, "--version", "-V", callback=_version_callback, is_eager=True,
         help="Show version and exit.",
+    ),
+    upgrade: bool = typer.Option(
+        False, "--upgrade", callback=_upgrade_callback, is_eager=True,
+        help="Upgrade swarm-debug to the latest version.",
     ),
     help_all: bool = typer.Option(
         False, "--help-all", "-H", callback=_help_all_callback, is_eager=True,
@@ -363,7 +437,7 @@ def install_cursor_skill():
 
     _console.print(Panel(
         f"[green]Cursor skill {action}[/green]: {dst}\n"
-        "[yellow]Tip:[/yellow] [dim]this will be kept in sync automatically whenever you use any swarm-debug command.[/dim]",
+        "[yellow]Tip: this will be kept in sync automatically whenever you use any swarm-debug command.[/yellow]",
         border_style="green",
     ))
 
