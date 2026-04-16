@@ -34,7 +34,7 @@ class MainApp:
                     log.debug("Starting lifespan for sub_app: %s", sub_app.name)
                     await stack.enter_async_context(sub_app.lifespan())
                 port = os.environ.get("BACKEND_PORT", "8324")
-                print(f"\nCheck out the API docs at: http://127.0.0.1:{port}/docs\n")
+                log.info("Check out the API docs at: http://127.0.0.1:%s/docs", port)
                 yield
         
         self.app = FastAPI(lifespan=lifespan)

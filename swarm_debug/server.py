@@ -2,8 +2,10 @@ import logging
 import os
 import uvicorn
 
+_verbose = os.environ.get("SWARM_DEBUG_VERBOSE", "1") == "1"
+
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.DEBUG if _verbose else logging.CRITICAL,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 
@@ -31,12 +33,102 @@ if os.path.isdir(BUILD_DIR):
     app.mount("/", StaticFiles(directory=BUILD_DIR, html=True), name="gui")
 
 
-def start_server(port: int = 6969, open_browser: bool = False):
-    if open_browser:
-        import threading
-        import webbrowser
-        threading.Timer(1.0, lambda: webbrowser.open(f"http://localhost:{port}")).start()
-    uvicorn.run("swarm_debug.server:app", host="0.0.0.0", port=port, reload=False)
+def _wait_for_server(port: int, timeout: float = 10.0) -> bool:
+    """Poll the health endpoint with a Rich progress bar until the server is ready."""
+    import time
+    import urllib.request
+    from rich.console import Console
+    from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn, TimeElapsedColumn
+
+    console = Console(color_system="truecolor")
+    url = f"http://127.0.0.1:{port}/api/health/check"
+    start = time.monotonic()
+
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[bold]Starting server…"),
+        BarColumn(),
+        TimeElapsedColumn(),
+        console=console,
+        transient=True,
+    ) as progress:
+        task = progress.add_task("startup", total=100)
+        while time.monotonic() - start < timeout:
+            try:
+                with urllib.request.urlopen(url, timeout=1):
+                    progress.update(task, completed=100)
+                    return True
+            except (urllib.error.URLError, OSError, ConnectionError):
+                elapsed_pct = min(90, ((time.monotonic() - start) / timeout) * 90)
+                progress.update(task, completed=elapsed_pct)
+                time.sleep(0.2)
+    return False
+
+
+def start_server(port: int = 6969, open_browser: bool = False, verbose: bool = False):
+    if verbose:
+        os.environ["SWARM_DEBUG_VERBOSE"] = "1"
+        if open_browser:
+            import threading
+            import webbrowser
+            threading.Timer(1.0, lambda: webbrowser.open(f"http://localhost:{port}")).start()
+        uvicorn.run("swarm_debug.server:app", host="0.0.0.0", port=port, reload=False)
+        return
+
+    os.environ["SWARM_DEBUG_VERBOSE"] = "0"
+
+    root = logging.getLogger()
+    root.setLevel(logging.CRITICAL)
+    for h in root.handlers:
+        h.setLevel(logging.CRITICAL)
+
+    import asyncio
+    import threading
+    import webbrowser
+    from rich.console import Console
+    from rich.panel import Panel
+    from rich.text import Text
+
+    console = Console(color_system="truecolor")
+
+    panel_content = Text.from_markup(
+        f"[bold cyan]swarm-debug[/bold cyan] GUI server\n"
+        f"[dim]Port:[/dim] {port}  "
+        f"[dim]Docs:[/dim] http://127.0.0.1:{port}/docs\n"
+        f"[dim]Press Ctrl+C to quit[/dim]"
+    )
+    console.print(Panel(panel_content, title="[bold]swarm-debug[/bold]", border_style="bright_cyan"))
+
+    config = uvicorn.Config(
+        "swarm_debug.server:app",
+        host="0.0.0.0",
+        port=port,
+        log_level="critical",
+        access_log=False,
+    )
+    server = uvicorn.Server(config)
+
+    server_thread = threading.Thread(
+        target=lambda: asyncio.run(server.serve()),
+        daemon=True,
+    )
+    server_thread.start()
+
+    if _wait_for_server(port):
+        console.print(f"[green bold]✔[/green bold] Server ready at [link=http://localhost:{port}]http://localhost:{port}[/link]")
+        if open_browser:
+            webbrowser.open(f"http://localhost:{port}")
+            console.print("[green bold]✔[/green bold] Browser opened")
+    else:
+        console.print("[red bold]✘[/red bold] Server failed to start within timeout")
+        return
+
+    try:
+        server_thread.join()
+    except KeyboardInterrupt:
+        console.print("\n[dim]Shutting down…[/dim]")
+        server.should_exit = True
+        server_thread.join(timeout=5)
 
 
 def main():

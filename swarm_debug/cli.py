@@ -8,10 +8,12 @@ from importlib.metadata import version as pkg_version
 from pathlib import Path
 from typing import Optional
 
+import click
 import typer
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
+from rich.text import Text
 from rich.traceback import install as install_rich_traceback
 
 install_rich_traceback(show_locals=True)
@@ -98,6 +100,80 @@ def _version_callback(value: bool):
         raise typer.Exit()
 
 
+def _help_all_callback(ctx: typer.Context, value: bool):
+    if not value:
+        return
+
+    click_group = ctx.command
+    ver = _get_version()
+
+    _console.print()
+    _console.print(Panel(
+        f"[bold cyan]swarm-debug[/bold cyan] [dim]{ver}[/dim] — Full Command Reference",
+        border_style="bright_cyan",
+    ))
+
+    for cmd_name in click_group.list_commands(ctx):
+        cmd = click_group.get_command(ctx, cmd_name)
+        desc = cmd.help or ""
+
+        header = Text()
+        header.append(f"  {cmd_name}", style="bold cyan")
+        header.append(f"  {desc}", style="dim")
+        _console.print(header)
+
+        args = [p for p in cmd.params if isinstance(p, click.Argument)]
+        opts = [p for p in cmd.params if isinstance(p, click.Option) and p.name != "help"]
+
+        if args:
+            for a in args:
+                type_name = a.type.name.upper() if hasattr(a.type, "name") else "VALUE"
+                required = " [dim](required)[/dim]" if a.required else " [dim](optional)[/dim]"
+                help_text = getattr(a, "help", None) or ""
+                _console.print(
+                    f"        [green]{a.name.upper():<16}[/green]"
+                    f"[yellow]{type_name:<10}[/yellow]"
+                    f"{help_text}{required}"
+                )
+
+        if opts:
+            for o in opts:
+                flag_str = " / ".join(o.opts)
+                default = f" [dim]\\[default: {o.default}][/dim]" if o.default is not None and o.default is not False else ""
+                help_text = o.help or ""
+                _console.print(
+                    f"        [green]{flag_str:<16}[/green]"
+                    f"{help_text}{default}"
+                )
+
+        if not args and not opts:
+            _console.print("        [dim](no arguments or options)[/dim]")
+
+        _console.print()
+
+    api_table = Table(
+        title="API-Only Endpoints (no CLI equivalent)",
+        show_header=True,
+        border_style="bright_cyan",
+        title_style="bold",
+    )
+    api_table.add_column("Method", style="bold yellow", width=8)
+    api_table.add_column("Endpoint", style="cyan")
+    api_table.add_column("Description")
+    api_table.add_row("POST", "/api/debugger/reset_color", "Reset all colors to defaults (individually, without resetting emojis)")
+    api_table.add_row("POST", "/api/debugger/reset_emoji", "Reset all emojis to defaults (individually, without resetting colors)")
+    api_table.add_row("GET", "/api/debugger/pull_structure", "Fetch the full debug tree as JSON")
+    api_table.add_row("POST", "/api/debugger/push_structure", "Push a modified debug tree")
+    api_table.add_row("GET", "/api/debugger/events", "SSE stream — emits events when toggles change on disk")
+    _console.print(api_table)
+
+    _console.print()
+    _console.print("[dim]Access these via the GUI ([cyan]swarm-debug gui[/cyan]) or directly at [cyan]http://localhost:6969/docs[/cyan][/dim]")
+    _console.print()
+
+    raise typer.Exit()
+
+
 _SKIP_STALENESS_COMMANDS = {"install-cursor-skill", "uninstall-cursor-skill"}
 
 
@@ -108,6 +184,10 @@ def _callback(
         False, "--version", "-V", callback=_version_callback, is_eager=True,
         help="Show version and exit.",
     ),
+    help_all: bool = typer.Option(
+        False, "--help-all", "-H", callback=_help_all_callback, is_eager=True,
+        help="Show detailed help for all commands.",
+    ),
 ):
     if ctx.invoked_subcommand not in _SKIP_STALENESS_COMMANDS:
         _check_all_staleness(_get_version())
@@ -117,10 +197,14 @@ def _callback(
 def gui(
     port: int = typer.Option(DEFAULT_PORT, "--port", "-p",
                              help=f"Port for the GUI server (default: {DEFAULT_PORT})"),
+    verbose: bool = typer.Option(False, "--verbose", "-v",
+                                 help="Show all server logs in the terminal."),
 ):
     """Launch the debug configuration GUI."""
+    import os
+    os.environ["SWARM_DEBUG_VERBOSE"] = "1" if verbose else "0"
     from swarm_debug.server import start_server
-    start_server(port=port, open_browser=True)
+    start_server(port=port, open_browser=True, verbose=verbose)
 
 
 @app.command()
@@ -247,7 +331,7 @@ def install_cursor_skill():
 
     if dst.exists():
         if filecmp.cmp(_SKILL_SRC, dst, shallow=False):
-            _console.print(f"Cursor skill is already up to date: [dim]{dst}[/dim]")
+            _console.print(Panel(f"[bold yellow]Cursor skill is already up to date:[/bold yellow] [dim]{dst}[/dim]"))
             return
         shutil.copy2(_SKILL_SRC, dst)
         _console.print(f"Cursor skill [green]updated[/green]: {dst}")
@@ -265,7 +349,7 @@ def uninstall_cursor_skill():
     dst_dir = _skill_dst_dir()
 
     if not dst_dir.exists():
-        _console.print("Cursor skill is not installed, nothing to remove.")
+        _console.print(Panel("[red]Cursor skill is not installed, nothing to remove.[/red]"))
         return
 
     typer.confirm("Remove the Cursor skill?", abort=True)
