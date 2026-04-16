@@ -86,7 +86,8 @@ def update_debug_toggles(save_to_file=True) -> Directory:
             except (json.JSONDecodeError, ValueError, IndexError):
                 json_loaded_dir = None
     else:
-        print("No JSON file found")
+        from rich.console import Console
+        Console(stderr=True).print("[dim]No JSON file found[/dim]")
 
     scanned_dir = Directory(path="", 
                             color=json_loaded_dir.color if json_loaded_dir else DEFAULT_COLOR, 

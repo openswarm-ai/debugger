@@ -134,7 +134,8 @@ def toggle_all(tree: Directory, state: bool):
 
 def set_node_color(tree: Directory, target_path: str, color: str) -> bool:
     if not re.match(r"^#[0-9a-fA-F]{6}$", color):
-        print(f"Error: '{color}' is not a valid hex color (expected format: #rrggbb)", file=sys.stderr)
+        from rich.console import Console
+        Console(stderr=True).print(f"[red]Error:[/red] '{color}' is not a valid hex color (expected format: #rrggbb)")
         return False
     node = find_node(tree, target_path)
     if node is None:
@@ -166,19 +167,35 @@ def print_status(tree: Directory, json_mode: bool = False):
         print(json.dumps(output, ensure_ascii=False, indent=2))
         return
 
-    root_dir = get_root_dir()
-    print(f"Project root: {root_dir}\n")
+    from rich.console import Console
+    from rich.text import Text
+    from rich.tree import Tree as RichTree
 
-    def _print_node(node: Union[DebugFile, Directory], depth: int):
-        indent = "  " * depth
-        tag = "[ON] " if node.is_toggled else "[OFF]"
+    console = Console()
+    root_dir = get_root_dir()
+
+    def _node_label(node: Union[DebugFile, Directory]) -> Text:
         name = os.path.basename(node.path) if node.path else "root"
         is_dir = isinstance(node, Directory)
-        suffix = "/" if is_dir else ""
-        print(f"{indent}{tag} {name}{suffix}")
-
         if is_dir:
-            for child in node.children:
-                _print_node(child, depth + 1)
+            name += "/"
 
-    _print_node(tree, 0)
+        badge = Text(" ON ", style="bold white on green") if node.is_toggled else Text(" OFF ", style="bold white on red")
+        label = Text(f"{node.emoji} ", style=node.color)
+        label.append(name, style=f"bold {node.color}")
+        label.append(" ")
+        label.append(badge)
+        return label
+
+    def _build_tree(node: Union[DebugFile, Directory], parent: RichTree):
+        if isinstance(node, Directory):
+            for child in node.children:
+                branch = parent.add(_node_label(child))
+                if isinstance(child, Directory):
+                    _build_tree(child, branch)
+
+    rich_tree = RichTree(_node_label(tree), guide_style="dim")
+    _build_tree(tree, rich_tree)
+
+    console.print(f"\nProject root: [bold]{root_dir}[/bold]\n")
+    console.print(rich_tree)

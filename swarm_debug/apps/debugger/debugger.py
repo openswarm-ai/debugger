@@ -28,7 +28,7 @@ debugger = SubApp("debugger", debugger_lifespan)
 @typechecked
 async def pull_structure() -> JSONResponse:
     log.info("GET /api/debugger/pull_structure")
-    scanned_dir = update_debug_toggles(save_to_file=True)
+    scanned_dir = update_debug_toggles(save_to_file=False)
     output = dir_to_output_format(scanned_dir)
     return JSONResponse(content=output)
 

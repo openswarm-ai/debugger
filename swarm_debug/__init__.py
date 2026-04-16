@@ -1,13 +1,29 @@
 import inspect
+import io
 import os
+
+from rich.console import Console
+from rich.text import Text
+
 from swarm_debug.core.log.log_config import log_config
 from swarm_debug.core.Debugleton import Debugleton
-from swarm_debug.core.utils.color_adjuster import rgb_to_ansi, bold_and_italicize_text, hex_to_rgb
 from swarm_debug.core.utils.debug_arg_parser import (
     is_text, is_error, extract_debug_args, filter_kwargs, has_percent_format,
 )
 
 _SENTINEL = object()
+
+_string_buf = io.StringIO()
+_rich_console = Console(file=_string_buf, highlight=False, color_system="truecolor")
+
+
+def _render_rich(markup: str) -> str:
+    """Render a Rich markup string to an ANSI-escaped string for the logger."""
+    _string_buf.truncate(0)
+    _string_buf.seek(0)
+    _rich_console.print(markup, end="")
+    _string_buf.seek(0)
+    return _string_buf.read()
 
 
 def debug(*args, mode: str = 'debug', override_max_chars: bool = False,
@@ -45,18 +61,23 @@ def debug(*args, mode: str = 'debug', override_max_chars: bool = False,
             return s[:int(max_chars/2)] + "...\n..." + s[v_len-int(max_chars/2):]
         return value
 
-    def _emit(text, is_error_line=False):
+    def _emit(text, is_error_line=False, bold_italic=False):
         nonlocal t_color, t_emoji, t_is_on
         if is_error_line:
             t_color = "#FE3F3F"
             t_emoji = "❌"
             t_is_on = True
-        color = hex_to_rgb(t_color)
-        print_str = f"{t_emoji}{rgb_to_ansi(color)}{indent_str}[{function_print_str}] : {text}\033[0m"
-        if t_is_on:
-            log_config.debug_custom(print_str, mode)
 
-    # %-style formatting: debug("msg %s", val1, val2)
+        escaped_text = str(text).replace("[", "\\[")
+        if bold_italic:
+            content = f"[bold italic]{escaped_text}[/bold italic]"
+        else:
+            content = escaped_text
+
+        markup = f"{t_emoji}[{t_color}]{indent_str}\\[{function_print_str}] : {content}[/]"
+        if t_is_on:
+            log_config.debug_custom(_render_rich(markup), mode)
+
     if (len(args) >= 2
             and isinstance(args[0], str)
             and has_percent_format(args[0])):
@@ -66,18 +87,16 @@ def debug(*args, mode: str = 'debug', override_max_chars: bool = False,
             formatted = args[0]
         formatted = _truncate(formatted)
         err = is_error(formatted, arg_names[0] if arg_names else '')
-        _emit(bold_and_italicize_text(formatted), is_error_line=err)
+        _emit(formatted, is_error_line=err, bold_italic=True)
         return
 
-    # sep= was explicitly passed — join all args like print()
     if sep is not _SENTINEL:
         joined = sep.join(str(a) for a in args)
         joined = _truncate(joined)
         err = is_error(joined, '')
-        _emit(bold_and_italicize_text(joined), is_error_line=err)
+        _emit(joined, is_error_line=err, bold_italic=True)
         return
 
-    # Default: per-argument output (original behavior, now with robust parsing)
     for arg_name, arg_value in zip(arg_names, args):
         arg_is_error = is_error(arg_value, arg_name)
         arg_is_text = is_text(arg_value, arg_name)
@@ -85,6 +104,6 @@ def debug(*args, mode: str = 'debug', override_max_chars: bool = False,
         arg_value = _truncate(arg_value)
 
         if arg_is_text:
-            _emit(bold_and_italicize_text(arg_value), is_error_line=arg_is_error)
+            _emit(arg_value, is_error_line=arg_is_error, bold_italic=True)
         else:
             _emit(f"{arg_name} = {arg_value}", is_error_line=arg_is_error)

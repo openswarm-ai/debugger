@@ -30,6 +30,12 @@ export const pullWithRetry = createAsyncThunk(
       `Failed to connect to the backend after ${pullRetryCount} attempt${pullRetryCount !== 1 ? 's' : ''}. Make sure the server is running.`,
     );
   },
+  {
+    condition: (_, { getState }) => {
+      const { debugger: state } = (getState() as RootState);
+      return !state.loading;
+    },
+  },
 );
 
 export const pushStructure = createAsyncThunk(

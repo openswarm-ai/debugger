@@ -39,12 +39,17 @@ const Debugger: React.FC = () => {
 
   useEffect(() => {
     const es = new EventSource(EVENTS_URL);
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
     es.onmessage = () => {
       if (!dirtyRef.current) {
-        dispatch(pullWithRetry());
+        if (debounceTimer) clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => dispatch(pullWithRetry()), 500);
       }
     };
-    return () => es.close();
+    return () => {
+      es.close();
+      if (debounceTimer) clearTimeout(debounceTimer);
+    };
   }, [dispatch]);
 
   useEffect(() => {

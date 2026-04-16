@@ -48,7 +48,8 @@ class Directory:
                     # print(f"\t[construct_ordered_abspaths]: Child is file: {child_abspath}")
                     ordered_abspaths.append({"abspath": child_abspath, "instance": child})
                 else:
-                    print(f"\033[38;5;120mEntry is non existent: {child_abspath}\033[0m")
+                    from rich.console import Console
+                    Console(stderr=True).print(f"[yellow]Entry is non existent: {child_abspath}[/yellow]")
                 # print(f"\t[construct_ordered_abspaths]: Finished for dir: {full_path}")
             # print(f"\t[construct_ordered_abspaths]: RETURNING FROM DIR: {full_path}")
             return ordered_abspaths
@@ -63,19 +64,16 @@ class Directory:
             
 
     def build_structure(self):
-        print("[build_structure]: START")
+        from rich.console import Console
+
+        console = Console()
         root_dir = self.get_abspath()
-        # print(f"[build_structure]: Root dir: {root_dir}")
         excluded_dirs = [".venv", "debugger", "node_modules", ".git", "__pycache__"]
-        project_structure = []
 
         def construct_project_structure(dir_path: str, parent_dir: Directory):
-            # print(f"[build_structure]: Scanning dir: {dir_path}")
             with os.scandir(dir_path) as it:
                 for entry in it:
-                    # print(f"[build_structure]: Entry: {entry.path}")
                     if entry.name in excluded_dirs:
-                        # print(f"[build_structure]: Excluding {entry.path}")
                         continue
                     root_rel_path = get_root_rel_path(entry.path)
                     if entry.is_dir():
@@ -87,11 +85,10 @@ class Directory:
                         if debug_file.calls_debug_function():
                             parent_dir.add_child(debug_file)
                     else:
-                        raise Exception(f"[build_structure]: Entry is not dir or file: {entry.path}")
-        
-        construct_project_structure(root_dir, self)        
-        # [print(f"[build_structure]: {file}") for file in project_structure]
-        # print(f"[build_structure]: END")
+                        raise Exception(f"Entry is not dir or file: {entry.path}")
+
+        with console.status("[bold green]Scanning project...", spinner="dots"):
+            construct_project_structure(root_dir, self)
         return
 
     def to_dict(self):
@@ -218,5 +215,6 @@ def lighten_color(color, amount=50):
         b = min(255, int(color[4:6], 16) + amount)
         return f'#{r:02x}{g:02x}{b:02x}'
     except Exception as e:
-        print(f"Error lightening color {color}: {e}")
+        from rich.console import Console
+        Console(stderr=True).print(f"[red]Error lightening color {color}: {e}[/red]")
         return color

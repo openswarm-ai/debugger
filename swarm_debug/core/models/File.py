@@ -22,8 +22,9 @@ class File:
                 with open(full_path, 'r', encoding='utf-8') as file:
                     content = file.read()
                 result = 'debug(' in content
-            except (UnicodeDecodeError, FileNotFoundError) as e:
-                print(f"Error reading file {full_path}")
+            except (UnicodeDecodeError, FileNotFoundError):
+                from rich.console import Console
+                Console(stderr=True).print(f"[red]Error reading file {full_path}[/red]")
                 result = False
         # print(f"??calls_debug_function?? {result}")
         return result

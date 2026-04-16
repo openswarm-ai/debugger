@@ -1,67 +1,80 @@
 # Haik: sorry bout the filename
 
+import os
 import threading
-from swarm_debug.core.models.project_scanner import update_debug_toggles
-from swarm_debug.core.models.Directory import Directory
-from swarm_debug.core.models.DebugFile import DebugFile
+import time
+
+from rich.console import Console
+from rich.panel import Panel
+
 from swarm_debug.core.DEFAULTS import DEFAULT_COLOR, DEFAULT_TOGGLED, DEFAULT_EMOJI, get_root_dir
 from swarm_debug.core.data_dir import get_data_file
-import os
-import time
+from swarm_debug.core.models.DebugFile import DebugFile
+from swarm_debug.core.models.Directory import Directory
+from swarm_debug.core.models.project_scanner import update_debug_toggles
+
+_console = Console(color_system="truecolor")
+_err_console = Console(stderr=True)
+
 
 class Debugleton:
     _instance = None
-    _lock = threading.Lock()  # Lock for thread-safe singleton creation
+    _lock = threading.Lock()
     sync_lock: threading.Lock
 
     def __new__(cls, *args, **kwargs):
-        # Double-checked locking for thread-safe singleton creation
         if cls._instance is None:
             with cls._lock:
                 if cls._instance is None:
                     cls._instance = super(Debugleton, cls).__new__(cls)
-                    print("\033[38;5;120m\n---------------------------------\033[0m")
-                    print("\033[38;5;120m|\tDEBUGLETON INIT \t|\033[0m")
                     cls._instance.dir = None
-                    print("\033[38;5;120m|\tScanning Project...\t|\033[0m")
                     cls._instance.sync_lock = threading.Lock()
                     cls._instance.sync_lock.acquire(blocking=False)
-                    cls._instance.sync_to_saved(is_first_sync=True)
+
+                    with _console.status("[bold green]Debugleton: scanning project...", spinner="dots"):
+                        cls._instance.sync_to_saved(is_first_sync=True)
+
                     cls._instance.sync_lock.release()
-                    print("\033[38;5;120m|\t...Project Scanned\t|\033[0m")
-                    print("\033[38;5;120m|\tDEBUGLETON INIT DONE\t|\033[0m")
-                    print("\033[38;5;120m---------------------------------\n\033[0m")
+                    _console.print(Panel(
+                        "[bold green]Debugleton initialized[/bold green]",
+                        border_style="green",
+                        expand=False,
+                    ))
         return cls._instance
-    
 
     def _needs_resync_file(self):
         return get_data_file("needs_resync.txt", get_root_dir())
 
     def sync_to_saved(self, is_first_sync=False):
-        if not is_first_sync: self.sync_lock.acquire()
+        if not is_first_sync:
+            self.sync_lock.acquire()
         self.dir = update_debug_toggles(save_to_file=False)
         self.abspaths, self.instances = self.dir.get_ordered_abspaths_and_instances()
         with open(self._needs_resync_file(), 'w') as f:
             f.write('0')
-        if not is_first_sync: self.sync_lock.release()
+        if not is_first_sync:
+            self.sync_lock.release()
 
     def needs_resync(self):
         num_tries = 0
         while self.is_syncing():
-            print(f"Waiting for Debugleton to sync... ({num_tries})")
+            _console.print(f"[dim]Waiting for Debugleton to sync... ({num_tries})[/dim]")
             time.sleep(5)
             num_tries += 1
             if num_tries > 10:
-                print(f"""
-                      NOTE: Debugleton is taking a long time, there's one scenario where it breaks:
-                      \n\t- If running in docker, and you deleted one of the root dirs in the volumes of docker compose,
-                      \n\t  then the debugger will not be able to find the project and will get stuck in an infinite loop.
-                      \n\t- In this case, you can restart the docker container and delete the volume in the docker compose file and it will resync.
-                      """)
+                _err_console.print(Panel(
+                    "[bold yellow]Debugleton is taking a long time.[/bold yellow]\n\n"
+                    "If running in Docker and you deleted one of the root dirs in the volumes "
+                    "of docker-compose, the debugger will not be able to find the project and "
+                    "will get stuck in an infinite loop.\n\n"
+                    "Restart the Docker container and remove the volume to resync.",
+                    title="Warning",
+                    border_style="yellow",
+                ))
         with open(self._needs_resync_file(), 'r') as f:
-                does_need_resync = True if f.read().strip() == '1' else False
+            does_need_resync = f.read().strip() == '1'
         return does_need_resync
-    
+
     def is_syncing(self):
         return self.sync_lock.locked()
 
@@ -74,5 +87,5 @@ class Debugleton:
             match = self.instances[filepath_id]
             return match.color, match.is_toggled, match.emoji
         except ValueError:
-            print(f"Filepath not found: {filepath}")
+            _err_console.print(f"[yellow]Filepath not found: {filepath}[/yellow]")
             return DEFAULT_COLOR, DEFAULT_TOGGLED, DEFAULT_EMOJI

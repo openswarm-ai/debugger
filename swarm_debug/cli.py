@@ -1,37 +1,41 @@
-import argparse
+import enum
 import filecmp
 import json
 import os
 import shutil
-import sys
 import urllib.request
-from importlib.metadata import version
+from importlib.metadata import version as pkg_version
 from pathlib import Path
+from typing import Optional
 
+import typer
+from rich.console import Console
+from rich.panel import Panel
+from rich.table import Table
+from rich.traceback import install as install_rich_traceback
+
+install_rich_traceback(show_locals=True)
+
+app = typer.Typer(
+    name="swarm-debug",
+    help="A colorized, toggleable debug logger with a web GUI and CLI.",
+    no_args_is_help=True,
+)
+
+_console = Console(color_system="truecolor")
+_err_console = Console(stderr=True, color_system="truecolor")
 
 DEFAULT_PORT = 6969
-
-
-class _StalenessCheckVersionAction(argparse._VersionAction):
-    """Show staleness notice before printing version and exiting."""
-    def __call__(self, parser, namespace, values, option_string=None):
-        _check_all_staleness(self.version.split()[-1])
-        super().__call__(parser, namespace, values, option_string)
-
-
-class _StalenessCheckHelpAction(argparse._HelpAction):
-    """Show staleness notice before printing help and exiting."""
-    def __call__(self, parser, namespace, values, option_string=None):
-        pkg_version = version("swarm-debug")
-        _check_all_staleness(pkg_version)
-        super().__call__(parser, namespace, values, option_string)
-
 
 _SKILL_SRC = Path(__file__).resolve().parent / "data" / "SKILL.md"
 
 
+class State(str, enum.Enum):
+    on = "on"
+    off = "off"
+
+
 def _skill_dst_dir() -> Path:
-    """Project-local skill directory so each project tracks its own version."""
     from swarm_debug.core.DEFAULTS import get_root_dir
     return Path(get_root_dir()) / ".cursor" / "skills" / "swarm-debug"
 
@@ -40,159 +44,19 @@ def _skill_dst() -> Path:
     return _skill_dst_dir() / "SKILL.md"
 
 
-def _cmd_gui(args):
-    from swarm_debug.server import start_server
-    start_server(port=args.port, open_browser=True)
-
-
-def _cmd_status(args):
-    from swarm_debug.core.toggle_ops import load_tree, print_status
-    tree = load_tree(quiet=args.json)
-    print_status(tree, json_mode=args.json)
-
-
-def _cmd_toggle(args):
-    from swarm_debug.core.toggle_ops import load_tree, save_tree, toggle_all, toggle_node
-
-    tree = load_tree()
-
-    if args.all:
-        toggle_all(tree, args.state == "on")
-        save_tree(tree)
-        state_label = "ON" if args.state == "on" else "OFF"
-        print(f"Toggled all files {state_label}")
-        return
-
-    if not args.path:
-        print("Error: a path is required (or use --all)", file=sys.stderr)
-        sys.exit(1)
-
-    state = args.state == "on"
-    if toggle_node(tree, args.path, state):
-        save_tree(tree)
-        state_label = "ON" if state else "OFF"
-        print(f"Toggled '{args.path}' {state_label}")
-    else:
-        print(f"Error: path '{args.path}' not found in the debug tree", file=sys.stderr)
-        sys.exit(1)
-
-
-def _cmd_set_root(args):
-    from swarm_debug.core.DEFAULTS import set_root_dir
-    from swarm_debug.core.data_dir import get_data_file
-
-    path = os.path.abspath(args.path)
-    if not os.path.isdir(path):
-        print(f"Error: '{path}' is not a valid directory", file=sys.stderr)
-        sys.exit(1)
-
-    set_root_dir(path)
-    needs_resync_file = get_data_file("needs_resync.txt", path)
-    with open(needs_resync_file, "w") as f:
-        f.write("1")
-    print(f"Project root set to: {path}")
-
-
-def _cmd_set_color(args):
-    from swarm_debug.core.toggle_ops import load_tree, save_tree, set_node_color
-
-    tree = load_tree()
-    if set_node_color(tree, args.path, args.color):
-        save_tree(tree)
-        print(f"Set color of '{args.path}' to {args.color}")
-    else:
-        if not args.color.startswith("#") or len(args.color) != 7:
-            pass  # error already printed by set_node_color
-        else:
-            print(f"Error: path '{args.path}' not found in the debug tree", file=sys.stderr)
-        sys.exit(1)
-
-
-def _cmd_set_emoji(args):
-    from swarm_debug.core.toggle_ops import load_tree, save_tree, set_node_emoji
-
-    tree = load_tree()
-    if set_node_emoji(tree, args.path, args.emoji):
-        save_tree(tree)
-        print(f"Set emoji of '{args.path}' to {args.emoji}")
-    else:
-        print(f"Error: path '{args.path}' not found in the debug tree", file=sys.stderr)
-        sys.exit(1)
-
-
-def _cmd_reset(args):
-    from swarm_debug.core.toggle_ops import load_tree, reset_all, save_tree
-
-    tree = load_tree()
-    reset_all(tree)
-    save_tree(tree)
-    print("Reset all colors and emojis to defaults")
-
-
-def _install_cursor_skill():
-    if not _SKILL_SRC.exists():
-        print("Error: bundled SKILL.md not found in package data", file=sys.stderr)
-        sys.exit(1)
-
-    dst_dir = _skill_dst_dir()
-    dst = _skill_dst()
-
-    if dst.exists():
-        if filecmp.cmp(_SKILL_SRC, dst, shallow=False):
-            print(f"Cursor skill is already up to date: {dst}")
-            return
-        shutil.copy2(_SKILL_SRC, dst)
-        print(f"Cursor skill updated: {dst}")
-    else:
-        dst_dir.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(_SKILL_SRC, dst)
-        print(f"Cursor skill installed: {dst}")
-
-    print("Tip: this will be kept in sync automatically whenever you use any swarm-debug command.")
-
-
-def _uninstall_cursor_skill():
-    dst_dir = _skill_dst_dir()
-
-    if not dst_dir.exists():
-        print("Cursor skill is not installed, nothing to remove.")
-        return
-
-    shutil.rmtree(dst_dir)
-    print(f"Cursor skill removed: {dst_dir}")
-
-
-def _print_boxed_notice(lines, *, color="\033[31m"):
-    """Print a styled box with colored border and bold text to stderr."""
-    BOLD = "\033[1m"
-    RESET = "\033[0m"
-
-    inner_width = max(len(line) for line in lines) + 2
-    top = f"{color}╭{'─' * inner_width}╮{RESET}"
-    bot = f"{color}╰{'─' * inner_width}╯{RESET}"
-    mid = [f"{color}│{RESET} {BOLD}{line.ljust(inner_width - 2)}{RESET} {color}│{RESET}" for line in lines]
-
-    print(file=sys.stderr)
-    print(top, file=sys.stderr)
-    for row in mid:
-        print(row, file=sys.stderr)
-    print(bot, file=sys.stderr)
-    print(file=sys.stderr)
-
-
 def _check_skill_staleness():
-    """Warn if the installed Cursor skill is outdated compared to the bundled one."""
     dst = _skill_dst()
     if dst.exists() and _SKILL_SRC.exists():
         if not filecmp.cmp(_SKILL_SRC, dst, shallow=False):
-            _print_boxed_notice([
-                "⚠  Your Cursor skill is out of date.",
-                "   Run: swarm-debug --install-cursor-skill",
-            ])
+            _err_console.print(Panel(
+                "[bold]Your Cursor skill is out of date.[/bold]\n"
+                "Run: [cyan]swarm-debug install-cursor-skill[/cyan]",
+                title="Skill Outdated",
+                border_style="red",
+            ))
 
 
 def _check_package_staleness(current_version: str):
-    """Warn if a newer version of swarm-debug is available on PyPI."""
     from packaging.version import Version, InvalidVersion
 
     try:
@@ -202,11 +66,13 @@ def _check_package_staleness(current_version: str):
             data = json.loads(resp.read())
         latest = data["info"]["version"]
         if Version(latest) > Version(current_version):
-            _print_boxed_notice([
-                f"⚠  A newer swarm-debug is available: {latest}",
-                f"   You are running: {current_version}",
-                f"   Run: pip install --upgrade swarm-debug",
-            ], color="\033[33m")
+            _err_console.print(Panel(
+                f"[bold]A newer swarm-debug is available: [green]{latest}[/green][/bold]\n"
+                f"You are running: [red]{current_version}[/red]\n"
+                "Run: [cyan]pip install --upgrade swarm-debug[/cyan]",
+                title="Update Available",
+                border_style="yellow",
+            ))
     except (urllib.error.URLError, TimeoutError, KeyError,
             json.JSONDecodeError, InvalidVersion, OSError):
         pass
@@ -217,94 +83,224 @@ def _check_all_staleness(current_version: str):
     _check_package_staleness(current_version)
 
 
+def _get_version() -> str:
+    try:
+        return pkg_version("swarm-debug")
+    except Exception:
+        return "0.0.0-dev"
+
+
+def _version_callback(value: bool):
+    if value:
+        ver = _get_version()
+        _check_all_staleness(ver)
+        _console.print(f"swarm-debug {ver}")
+        raise typer.Exit()
+
+
+_SKIP_STALENESS_COMMANDS = {"install-cursor-skill", "uninstall-cursor-skill"}
+
+
+@app.callback(invoke_without_command=True)
+def _callback(
+    ctx: typer.Context,
+    version: bool = typer.Option(
+        False, "--version", "-V", callback=_version_callback, is_eager=True,
+        help="Show version and exit.",
+    ),
+):
+    if ctx.invoked_subcommand not in _SKIP_STALENESS_COMMANDS:
+        _check_all_staleness(_get_version())
+
+
+@app.command()
+def gui(
+    port: int = typer.Option(DEFAULT_PORT, "--port", "-p",
+                             help=f"Port for the GUI server (default: {DEFAULT_PORT})"),
+):
+    """Launch the debug configuration GUI."""
+    from swarm_debug.server import start_server
+    start_server(port=port, open_browser=True)
+
+
+@app.command()
+def status(
+    json_output: bool = typer.Option(False, "--json", help="Output as JSON"),
+):
+    """Show the debug toggle tree."""
+    from swarm_debug.core.toggle_ops import load_tree, print_status
+    tree = load_tree(quiet=json_output)
+    print_status(tree, json_mode=json_output)
+
+
+@app.command()
+def toggle(
+    state: State = typer.Argument(..., help="Desired state"),
+    path: Optional[str] = typer.Argument(None, help="Relative path (e.g. src/utils/helpers.py)"),
+    all_files: bool = typer.Option(False, "--all", help="Toggle all files"),
+):
+    """Toggle debug output for a file or directory."""
+    from swarm_debug.core.toggle_ops import load_tree, save_tree, toggle_all, toggle_node
+
+    tree = load_tree()
+
+    if all_files:
+        toggle_all(tree, state == State.on)
+        save_tree(tree)
+        label = "[green]ON[/green]" if state == State.on else "[red]OFF[/red]"
+        _console.print(f"Toggled all files {label}")
+        return
+
+    if not path:
+        _err_console.print("[red]Error:[/red] a path is required (or use --all)")
+        raise typer.Exit(code=1)
+
+    on = state == State.on
+    if toggle_node(tree, path, on):
+        save_tree(tree)
+        label = "[green]ON[/green]" if on else "[red]OFF[/red]"
+        _console.print(f"Toggled [bold]'{path}'[/bold] {label}")
+    else:
+        _err_console.print(f"[red]Error:[/red] path '{path}' not found in the debug tree")
+        raise typer.Exit(code=1)
+
+
+@app.command("set-root")
+def set_root(
+    path: str = typer.Argument(..., help="Absolute or relative path to the project root"),
+):
+    """Set the project root directory."""
+    from swarm_debug.core.DEFAULTS import set_root_dir
+    from swarm_debug.core.data_dir import get_data_file
+
+    abs_path = os.path.abspath(path)
+    if not os.path.isdir(abs_path):
+        _err_console.print(f"[red]Error:[/red] '{abs_path}' is not a valid directory")
+        raise typer.Exit(code=1)
+
+    set_root_dir(abs_path)
+    needs_resync_file = get_data_file("needs_resync.txt", abs_path)
+    with open(needs_resync_file, "w") as f:
+        f.write("1")
+    _console.print(f"Project root set to: [bold]{abs_path}[/bold]")
+
+
+@app.command("set-color")
+def set_color(
+    path: str = typer.Argument(..., help="Relative path to the file or directory"),
+    color: str = typer.Argument(..., help="Hex color (e.g. #ff0000)"),
+):
+    """Set a node's debug output color."""
+    from swarm_debug.core.toggle_ops import load_tree, save_tree, set_node_color
+
+    tree = load_tree()
+    if set_node_color(tree, path, color):
+        save_tree(tree)
+        _console.print(f"Set color of [bold]'{path}'[/bold] to [{color}]{color}[/]")
+    else:
+        if not color.startswith("#") or len(color) != 7:
+            pass
+        else:
+            _err_console.print(f"[red]Error:[/red] path '{path}' not found in the debug tree")
+        raise typer.Exit(code=1)
+
+
+@app.command("set-emoji")
+def set_emoji(
+    path: str = typer.Argument(..., help="Relative path to the file or directory"),
+    emoji: str = typer.Argument(..., help="Emoji character"),
+):
+    """Set a node's debug output emoji."""
+    from swarm_debug.core.toggle_ops import load_tree, save_tree, set_node_emoji
+
+    tree = load_tree()
+    if set_node_emoji(tree, path, emoji):
+        save_tree(tree)
+        _console.print(f"Set emoji of [bold]'{path}'[/bold] to {emoji}")
+    else:
+        _err_console.print(f"[red]Error:[/red] path '{path}' not found in the debug tree")
+        raise typer.Exit(code=1)
+
+
+@app.command()
+def reset():
+    """Reset all colors and emojis to defaults."""
+    typer.confirm("This will reset all colors and emojis to defaults. Continue?", abort=True)
+
+    from swarm_debug.core.toggle_ops import load_tree, reset_all, save_tree
+
+    tree = load_tree()
+    reset_all(tree)
+    save_tree(tree)
+    _console.print("[green]Reset all colors and emojis to defaults[/green]")
+
+
+@app.command("install-cursor-skill")
+def install_cursor_skill():
+    """Install the swarm-debug Cursor AI skill to .cursor/skills/ in the project root."""
+    if not _SKILL_SRC.exists():
+        _err_console.print("[red]Error:[/red] bundled SKILL.md not found in package data")
+        raise typer.Exit(code=1)
+
+    dst_dir = _skill_dst_dir()
+    dst = _skill_dst()
+
+    if dst.exists():
+        if filecmp.cmp(_SKILL_SRC, dst, shallow=False):
+            _console.print(f"Cursor skill is already up to date: [dim]{dst}[/dim]")
+            return
+        shutil.copy2(_SKILL_SRC, dst)
+        _console.print(f"Cursor skill [green]updated[/green]: {dst}")
+    else:
+        dst_dir.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(_SKILL_SRC, dst)
+        _console.print(f"Cursor skill [green]installed[/green]: {dst}")
+
+    _console.print("[dim]Tip: this will be kept in sync automatically whenever you use any swarm-debug command.[/dim]")
+
+
+@app.command("uninstall-cursor-skill")
+def uninstall_cursor_skill():
+    """Remove the swarm-debug Cursor AI skill from .cursor/skills/ in the project root."""
+    dst_dir = _skill_dst_dir()
+
+    if not dst_dir.exists():
+        _console.print("Cursor skill is not installed, nothing to remove.")
+        return
+
+    typer.confirm("Remove the Cursor skill?", abort=True)
+    shutil.rmtree(dst_dir)
+    _console.print(f"Cursor skill [red]removed[/red]: {dst_dir}")
+
+
+@app.command()
+def stats():
+    """Show a flat table of all debug files with their status, color, and emoji."""
+    from swarm_debug.core.DEFAULTS import get_root_dir
+    from swarm_debug.core.models.DebugFile import DebugFile
+    from swarm_debug.core.models.Directory import Directory
+    from swarm_debug.core.toggle_ops import load_tree
+
+    tree = load_tree(quiet=True)
+
+    table = Table(title=f"Debug Files — {get_root_dir()}")
+    table.add_column("Path", style="bold")
+    table.add_column("Status", justify="center")
+    table.add_column("Color", justify="center")
+    table.add_column("Emoji", justify="center")
+
+    def _walk(node, depth=0):
+        if isinstance(node, DebugFile):
+            status_str = "[green]ON[/green]" if node.is_toggled else "[red]OFF[/red]"
+            color_block = f"[{node.color}]██[/]"
+            table.add_row(node.path, status_str, color_block, node.emoji)
+        elif isinstance(node, Directory):
+            for child in node.children:
+                _walk(child, depth + 1)
+
+    _walk(tree)
+    _console.print(table)
+
+
 def main():
-    pkg_version = version("swarm-debug")
-
-    parser = argparse.ArgumentParser(
-        prog="swarm-debug",
-        description="A colorized, toggleable debug logger with a web GUI and CLI.",
-        epilog="Run 'swarm-debug <command> --help' for more info on a specific command.",
-        add_help=False,
-    )
-    parser.add_argument(
-        "-h", "--help", action=_StalenessCheckHelpAction,
-        default=argparse.SUPPRESS, help="show this help message and exit",
-    )
-    parser.add_argument(
-        "--version", action=_StalenessCheckVersionAction,
-        version=f"swarm-debug {pkg_version}",
-    )
-    parser.add_argument(
-        "--install-cursor-skill", action="store_true",
-        help="Install the swarm-debug Cursor AI skill to .cursor/skills/ in the project root",
-    )
-    parser.add_argument(
-        "--uninstall-cursor-skill", action="store_true",
-        help="Remove the swarm-debug Cursor AI skill from .cursor/skills/ in the project root",
-    )
-    subparsers = parser.add_subparsers(dest="command")
-
-    # --- gui ---
-    gui_parser = subparsers.add_parser("gui", help="Launch the debug configuration GUI")
-    gui_parser.add_argument(
-        "--port", "-p", type=int, default=DEFAULT_PORT,
-        help=f"Port for the GUI server (default: {DEFAULT_PORT})",
-    )
-    gui_parser.set_defaults(func=_cmd_gui)
-
-    # --- status ---
-    status_parser = subparsers.add_parser("status", help="Show the debug toggle tree")
-    status_parser.add_argument(
-        "--json", action="store_true", help="Output as JSON"
-    )
-    status_parser.set_defaults(func=_cmd_status)
-
-    # --- toggle ---
-    toggle_parser = subparsers.add_parser(
-        "toggle", help="Toggle debug output for a file or directory"
-    )
-    toggle_parser.add_argument("state", choices=["on", "off"], help="Desired state")
-    toggle_parser.add_argument("path", nargs="?", default=None, help="Relative path (e.g. src/utils/helpers.py)")
-    toggle_parser.add_argument(
-        "--all", action="store_true", help="Toggle all files"
-    )
-    toggle_parser.set_defaults(func=_cmd_toggle)
-
-    # --- set-root ---
-    root_parser = subparsers.add_parser("set-root", help="Set the project root directory")
-    root_parser.add_argument("path", help="Absolute or relative path to the project root")
-    root_parser.set_defaults(func=_cmd_set_root)
-
-    # --- set-color ---
-    color_parser = subparsers.add_parser("set-color", help="Set a node's debug output color")
-    color_parser.add_argument("path", help="Relative path to the file or directory")
-    color_parser.add_argument("color", help="Hex color (e.g. #ff0000)")
-    color_parser.set_defaults(func=_cmd_set_color)
-
-    # --- set-emoji ---
-    emoji_parser = subparsers.add_parser("set-emoji", help="Set a node's debug output emoji")
-    emoji_parser.add_argument("path", help="Relative path to the file or directory")
-    emoji_parser.add_argument("emoji", help="Emoji character")
-    emoji_parser.set_defaults(func=_cmd_set_emoji)
-
-    # --- reset ---
-    reset_parser = subparsers.add_parser("reset", help="Reset all colors and emojis to defaults")
-    reset_parser.set_defaults(func=_cmd_reset)
-
-    args = parser.parse_args()
-
-    if args.install_cursor_skill:
-        _install_cursor_skill()
-        return
-
-    if args.uninstall_cursor_skill:
-        _uninstall_cursor_skill()
-        return
-
-    _check_all_staleness(pkg_version)
-
-    if args.command is None:
-        parser.print_help()
-        sys.exit(0)
-
-    args.func(args)
+    app()
