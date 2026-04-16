@@ -14,8 +14,22 @@ A non-invasive debug logger for Python. You add `debug()` calls to code; visibil
 
 - **NEVER** read `~/.swarm-debug/projects/<hash>/debug_toggles.json` directly with `cat`, `head`, `tail`, `read`, or any file tool. The raw JSON is an internal per-project cache and may be stale or inconsistent with the actual codebase.
 - **ALWAYS** use `swarm-debug status` or `swarm-debug status --json` to inspect state. The CLI rescans for `debug(` calls and returns the true resolved state.
-- If `swarm-debug` is not on PATH, run it via `python -m swarm_debug` or locate it with `which swarm-debug` / `pip show swarm-debug`. Do **NOT** fall back to reading the raw JSON file.
 - **NEVER** write to `debug_toggles.json` directly (stored per-project under `~/.swarm-debug/projects/<hash>/`). Use `swarm-debug toggle`, `swarm-debug set-color`, `swarm-debug set-emoji`, etc.
+
+## CRITICAL: Locate and activate the correct Python environment first
+
+Before running **any** `swarm-debug` command, you must find the environment that has the `swarm-debug` package installed:
+
+1. **Check `.vscode/settings.json`** in the project root for a `python.defaultInterpreterPath`. If it points to a venv (e.g. `${workspaceFolder}/backend/.venv/bin/python`), activate that venv first:
+   ```bash
+   source <path-to-that-venv>/bin/activate
+   ```
+2. **If no `.vscode/settings.json` exists** (or it has no interpreter path), search the project for a `.venv` directory that contains the `swarm-debug` package:
+   ```bash
+   find . -path '*/.venv/bin/swarm-debug' -print -quit
+   ```
+   If found, activate that venv.
+3. **If neither exists**, ask the user where the `swarm-debug` package is installed. Do **NOT** fall back to reading the raw JSON file or guessing a system Python path.
 
 ## Adding debug statements
 
