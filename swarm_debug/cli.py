@@ -1,8 +1,10 @@
 import argparse
 import filecmp
+import json
 import os
 import shutil
 import sys
+import urllib.request
 from importlib.metadata import version
 from pathlib import Path
 
@@ -13,14 +15,15 @@ DEFAULT_PORT = 6969
 class _StalenessCheckVersionAction(argparse._VersionAction):
     """Show staleness notice before printing version and exiting."""
     def __call__(self, parser, namespace, values, option_string=None):
-        _check_skill_staleness()
+        _check_all_staleness(self.version.split()[-1])
         super().__call__(parser, namespace, values, option_string)
 
 
 class _StalenessCheckHelpAction(argparse._HelpAction):
     """Show staleness notice before printing help and exiting."""
     def __call__(self, parser, namespace, values, option_string=None):
-        _check_skill_staleness()
+        pkg_version = version("swarm-debug")
+        _check_all_staleness(pkg_version)
         super().__call__(parser, namespace, values, option_string)
 
 
@@ -189,6 +192,32 @@ def _check_skill_staleness():
             ])
 
 
+def _check_package_staleness(current_version: str):
+    """Warn if a newer version of swarm-debug is available on PyPI."""
+    from packaging.version import Version, InvalidVersion
+
+    try:
+        url = "https://pypi.org/pypi/swarm-debug/json"
+        req = urllib.request.Request(url, headers={"Accept": "application/json"})
+        with urllib.request.urlopen(req, timeout=2) as resp:
+            data = json.loads(resp.read())
+        latest = data["info"]["version"]
+        if Version(latest) > Version(current_version):
+            _print_boxed_notice([
+                f"⚠  A newer swarm-debug is available: {latest}",
+                f"   You are running: {current_version}",
+                f"   Run: pip install --upgrade swarm-debug",
+            ])
+    except (urllib.error.URLError, TimeoutError, KeyError,
+            json.JSONDecodeError, InvalidVersion, OSError):
+        pass
+
+
+def _check_all_staleness(current_version: str):
+    _check_skill_staleness()
+    _check_package_staleness(current_version)
+
+
 def main():
     pkg_version = version("swarm-debug")
 
@@ -273,7 +302,7 @@ def main():
         _uninstall_cursor_skill()
         return
 
-    _check_skill_staleness()
+    _check_all_staleness(pkg_version)
 
     if args.command is None:
         parser.print_help()
