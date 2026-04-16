@@ -73,7 +73,7 @@ class Directory:
             with os.scandir(dir_path) as it:
                 for entry in it:
                     # print(f"[build_structure]: Entry: {entry.path}")
-                    if any(excluded_dir in entry.path for excluded_dir in excluded_dirs):
+                    if entry.name in excluded_dirs:
                         # print(f"[build_structure]: Excluding {entry.path}")
                         continue
                     root_rel_path = get_root_rel_path(entry.path)

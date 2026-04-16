@@ -52,7 +52,7 @@ def _cmd_toggle(args):
 
 def _cmd_set_root(args):
     from swarm_debug.core.DEFAULTS import set_root_dir
-    from swarm_debug.core.data_dir import NEEDS_RESYNC_FILE
+    from swarm_debug.core.data_dir import get_data_file
 
     path = os.path.abspath(args.path)
     if not os.path.isdir(path):
@@ -60,7 +60,8 @@ def _cmd_set_root(args):
         sys.exit(1)
 
     set_root_dir(path)
-    with open(NEEDS_RESYNC_FILE, "w") as f:
+    needs_resync_file = get_data_file("needs_resync.txt", path)
+    with open(needs_resync_file, "w") as f:
         f.write("1")
     print(f"Project root set to: {path}")
 

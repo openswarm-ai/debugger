@@ -3,7 +3,8 @@ import json
 import colorsys
 from typing import Union
 from swarm_debug.core.models.Directory import Directory
-from swarm_debug.core.DEFAULTS import DEFAULT_COLOR, DEFAULT_TOGGLED, DEFAULT_SET_MANUALLY, DEFAULT_SET_MANUALLY_EMOJI, TOGGLE_FILE, DEFAULT_EMOJI
+from swarm_debug.core.DEFAULTS import DEFAULT_COLOR, DEFAULT_TOGGLED, DEFAULT_SET_MANUALLY, DEFAULT_SET_MANUALLY_EMOJI, DEFAULT_EMOJI, get_root_dir
+from swarm_debug.core.data_dir import get_data_file
 from swarm_debug.core.models.DebugFile import DebugFile
 from collections import OrderedDict
 
@@ -13,11 +14,8 @@ def merge_directories(json_dir: Directory, scanned_dir: Directory):
     The values from json_dir take precedence where attributes overlap.
     It matches based on full directory and file structure, not just file names.
     """
-    # print(f"Merging JSON_DIR: {json_dir.path}\n with SCAN_DIR: {scanned_dir.path}")
     json_abspaths, json_instances = json_dir.get_ordered_abspaths_and_instances()
-    # print(f"json_abspaths: {json_abspaths}")
     scanned_abspaths, scanned_instances = scanned_dir.get_ordered_abspaths_and_instances()
-    # print(f"scanned_abspaths: {scanned_abspaths}")
 
     def find_matching_in_structure(scanned_child: Union[DebugFile, Directory], json_dir: Directory):
         assert json_dir in json_instances, f"JSON_DIR: {json_dir.path} not in json_instances"
@@ -28,15 +26,12 @@ def merge_directories(json_dir: Directory, scanned_dir: Directory):
         try:
             json_id = json_abspaths.index(scanned_abspath)
             json_instance = json_instances[json_id]
-            # print(f"Match found: {scanned_child.path} == {json_instance.path}")
         except ValueError:
-            # print(f"SCANNED_ABSPATH: {scanned_abspath} not in JSON_ABSPATHS")
             pass
         return json_instance
 
     def construct_merged_dir(json_dir: Directory, scanned_dir: Directory):
         for scanned_child in scanned_dir.children:
-            # Use the new recursive function to find the corresponding child in the JSON directory structure
             matching_json_child = find_matching_in_structure(scanned_child, json_dir)
             
             if isinstance(scanned_child, DebugFile) and matching_json_child:
@@ -53,7 +48,6 @@ def merge_directories(json_dir: Directory, scanned_dir: Directory):
                 scanned_child.set_manually_emoji = matching_json_child.set_manually_emoji
                 scanned_child.emoji = matching_json_child.emoji
 
-                # Recursively merge the subdirectories
                 construct_merged_dir(matching_json_child, scanned_child)
             else:
                 scanned_child.color = DEFAULT_COLOR
@@ -66,10 +60,12 @@ def merge_directories(json_dir: Directory, scanned_dir: Directory):
 
 
 def update_debug_toggles(save_to_file=True) -> Directory:
-    # print(f"[update_debug_toggles]: START")
+    root = get_root_dir()
+    toggle_file = get_data_file("debug_toggles.json", root)
+
     json_loaded_dir = None
-    if os.path.exists(TOGGLE_FILE):
-        with open(TOGGLE_FILE, 'r', encoding='utf-8') as file:
+    if os.path.exists(toggle_file):
+        with open(toggle_file, 'r', encoding='utf-8') as file:
             try:
                 json_data = json.load(file)
                 if not json_data:
@@ -81,20 +77,14 @@ def update_debug_toggles(save_to_file=True) -> Directory:
                                             set_manually_emoji=json_data[0].get('set_manually_emoji', DEFAULT_SET_MANUALLY_EMOJI),
                                             emoji=json_data[0].get('emoji', DEFAULT_EMOJI)
                                             )
-                # print(f"Root: {json_loaded_dir}")
-                # print("Json Children 1:")
-                # [print(child.path) for child in json_loaded_dir.children]
 
-                json_loaded_dir.load_from_json(json_data[0]['children'])  # Assuming the root is in json_data[0]
-                # print("Json Children 2:")
-                # [print(child.path) for child in json_loaded_dir.children]
+                json_loaded_dir.load_from_json(json_data[0]['children'])
 
             except (json.JSONDecodeError, ValueError, IndexError):
                 json_loaded_dir = None
     else:
         print("No JSON file found")
-    # 1. Create a directory structure from the filesystem scan
-    # print("Scanning directory...")
+
     scanned_dir = Directory(path="", 
                             color=json_loaded_dir.color if json_loaded_dir else DEFAULT_COLOR, 
                             is_toggled=json_loaded_dir.is_toggled if json_loaded_dir else DEFAULT_TOGGLED, 
@@ -102,36 +92,20 @@ def update_debug_toggles(save_to_file=True) -> Directory:
                             set_manually_emoji=json_loaded_dir.set_manually_emoji if json_loaded_dir else DEFAULT_SET_MANUALLY_EMOJI,
                             emoji=json_loaded_dir.emoji if json_loaded_dir else DEFAULT_EMOJI
                             )
-    # print(f"\n\nNum Children 1: {len(scanned_dir.children)}")
-    # [print(child.path) for child in scanned_dir.children]
     scanned_dir.build_structure()
-    # print(f"\n\nNum Children 2: {len(scanned_dir.children)}")
-    # [print(child.path) for child in scanned_dir.children]
     scanned_dir.prune_empty()
-    # print(f"\n\nNum Children 3: {len(scanned_dir.children)}")
-    # [print(child.path) for child in scanned_dir.children]
 
-    # print("1.1 Merged Dir First Child: ", scanned_dir.children[0])
-    # 4. Propagate the toggled state and color through the merged structure
     scanned_dir.propagate_toggled_state()
-    # print(f"\n\nNum Children 4: {len(scanned_dir.children)}")
-    # [print(child.path) for child in scanned_dir.children]
 
-    # 3. Merge the two directory structures
     if json_loaded_dir:
         merge_directories(json_loaded_dir, scanned_dir)
     
-    # print(f"\n\nNum Children 5: {len(scanned_dir.children)}")
     scanned_dir.propagate_color()
     output = dir_to_output_format(scanned_dir)
-    # print(f"\n\nNum Children 6: {len(scanned_dir.children)}")
-    
 
-    # 5. Write the updated structure back to the JSON file
     if save_to_file:
-        with open(TOGGLE_FILE, 'w', encoding='utf-8') as file:
+        with open(toggle_file, 'w', encoding='utf-8') as file:
              json.dump(output, file, ensure_ascii=False, indent=4)
-    # print(f"[update_debug_toggles]: END")
     return scanned_dir
 
 def dir_to_output_format(input_dir):

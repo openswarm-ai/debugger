@@ -5,7 +5,7 @@ import sys
 from contextlib import contextmanager
 from typing import Optional, Union
 
-from swarm_debug.core.data_dir import NEEDS_RESYNC_FILE, TOGGLE_FILE
+from swarm_debug.core.data_dir import get_data_file
 from swarm_debug.core.DEFAULTS import (
     DEFAULT_COLOR,
     DEFAULT_EMOJI,
@@ -17,6 +17,14 @@ from swarm_debug.core.DEFAULTS import (
 from swarm_debug.core.models.DebugFile import DebugFile
 from swarm_debug.core.models.Directory import Directory
 from swarm_debug.core.models.project_scanner import dir_to_output_format, update_debug_toggles
+
+
+def _toggle_file() -> str:
+    return get_data_file("debug_toggles.json", get_root_dir())
+
+
+def _needs_resync_file() -> str:
+    return get_data_file("needs_resync.txt", get_root_dir())
 
 
 @contextmanager
@@ -39,9 +47,9 @@ def load_tree(quiet: bool = False) -> Directory:
 
 def save_tree(tree: Directory):
     output = dir_to_output_format(tree)
-    with open(TOGGLE_FILE, "w", encoding="utf-8") as f:
+    with open(_toggle_file(), "w", encoding="utf-8") as f:
         json.dump(output, f, ensure_ascii=False, indent=4)
-    with open(NEEDS_RESYNC_FILE, "w") as f:
+    with open(_needs_resync_file(), "w") as f:
         f.write("1")
 
 

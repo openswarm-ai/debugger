@@ -3,7 +3,7 @@ name: swarm-debug
 description: >-
   Instrument Python code with toggleable debug output using swarm-debug.
   Use when adding debug statements, print statemens, or logging. Use when toggling debug visibility, managing debug
-  statements, or working with the swarm_debug module. NOTE: you should never use print or logging statements, only use debug.
+  statements, or working with the swarm_debug module. NOTE: you should never use print or logging statements, only use debug...
 ---
 
 # swarm-debug

@@ -3,7 +3,7 @@ import json
 import os
 from swarm_debug.config.Apps import SubApp
 from swarm_debug.core.models.project_scanner import update_debug_toggles, dir_to_output_format
-from swarm_debug.core.data_dir import NEEDS_RESYNC_FILE, TOGGLE_FILE as DEBUG_TOGGLE_FILE
+from swarm_debug.core.data_dir import get_data_file
 from swarm_debug.core.DEFAULTS import get_root_dir, set_root_dir
 from contextlib import asynccontextmanager
 from fastapi.responses import JSONResponse
@@ -35,10 +35,13 @@ async def pull_structure() -> JSONResponse:
 @typechecked
 async def push_structure(data: dict) -> JSONResponse:
     log.info("POST /api/debugger/push_structure")
+    root = get_root_dir()
+    toggle_file = get_data_file("debug_toggles.json", root)
+    needs_resync_file = get_data_file("needs_resync.txt", root)
     project_structure = data['projectStructure']
-    with open(DEBUG_TOGGLE_FILE, 'w', encoding='utf-8') as file:
+    with open(toggle_file, 'w', encoding='utf-8') as file:
         json.dump(project_structure, file, indent=4)
-    with open(NEEDS_RESYNC_FILE, 'w') as f:
+    with open(needs_resync_file, 'w') as f:
         f.write('1')
     return JSONResponse(content={"status": "success"})
 
@@ -78,6 +81,7 @@ async def set_root(data: dict) -> JSONResponse:
     if not path or not os.path.isdir(path):
         return JSONResponse(content={"error": "Invalid directory path"}, status_code=400)
     set_root_dir(path)
-    with open(NEEDS_RESYNC_FILE, 'w') as f:
+    needs_resync_file = get_data_file("needs_resync.txt", path)
+    with open(needs_resync_file, 'w') as f:
         f.write('1')
     return JSONResponse(content={"root_dir": get_root_dir()})
