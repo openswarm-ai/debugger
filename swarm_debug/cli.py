@@ -25,8 +25,16 @@ class _StalenessCheckHelpAction(argparse._HelpAction):
 
 
 _SKILL_SRC = Path(__file__).resolve().parent / "data" / "SKILL.md"
-_SKILL_DST_DIR = Path.home() / ".cursor" / "skills" / "swarm-debug"
-_SKILL_DST = _SKILL_DST_DIR / "SKILL.md"
+
+
+def _skill_dst_dir() -> Path:
+    """Project-local skill directory so each project tracks its own version."""
+    from swarm_debug.core.DEFAULTS import get_root_dir
+    return Path(get_root_dir()) / ".cursor" / "skills" / "swarm-debug"
+
+
+def _skill_dst() -> Path:
+    return _skill_dst_dir() / "SKILL.md"
 
 
 def _cmd_gui(args):
@@ -123,27 +131,32 @@ def _install_cursor_skill():
         print("Error: bundled SKILL.md not found in package data", file=sys.stderr)
         sys.exit(1)
 
-    if _SKILL_DST.exists():
-        if filecmp.cmp(_SKILL_SRC, _SKILL_DST, shallow=False):
-            print(f"Cursor skill is already up to date: {_SKILL_DST}")
+    dst_dir = _skill_dst_dir()
+    dst = _skill_dst()
+
+    if dst.exists():
+        if filecmp.cmp(_SKILL_SRC, dst, shallow=False):
+            print(f"Cursor skill is already up to date: {dst}")
             return
-        shutil.copy2(_SKILL_SRC, _SKILL_DST)
-        print(f"Cursor skill updated: {_SKILL_DST}")
+        shutil.copy2(_SKILL_SRC, dst)
+        print(f"Cursor skill updated: {dst}")
     else:
-        _SKILL_DST_DIR.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(_SKILL_SRC, _SKILL_DST)
-        print(f"Cursor skill installed: {_SKILL_DST}")
+        dst_dir.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(_SKILL_SRC, dst)
+        print(f"Cursor skill installed: {dst}")
 
     print("Tip: this will be kept in sync automatically whenever you use any swarm-debug command.")
 
 
 def _uninstall_cursor_skill():
-    if not _SKILL_DST_DIR.exists():
+    dst_dir = _skill_dst_dir()
+
+    if not dst_dir.exists():
         print("Cursor skill is not installed, nothing to remove.")
         return
 
-    shutil.rmtree(_SKILL_DST_DIR)
-    print(f"Cursor skill removed: {_SKILL_DST_DIR}")
+    shutil.rmtree(dst_dir)
+    print(f"Cursor skill removed: {dst_dir}")
 
 
 def _print_boxed_notice(lines):
@@ -167,8 +180,9 @@ def _print_boxed_notice(lines):
 
 def _check_skill_staleness():
     """Warn if the installed Cursor skill is outdated compared to the bundled one."""
-    if _SKILL_DST.exists() and _SKILL_SRC.exists():
-        if not filecmp.cmp(_SKILL_SRC, _SKILL_DST, shallow=False):
+    dst = _skill_dst()
+    if dst.exists() and _SKILL_SRC.exists():
+        if not filecmp.cmp(_SKILL_SRC, dst, shallow=False):
             _print_boxed_notice([
                 "⚠  Your Cursor skill is out of date.",
                 "   Run: swarm-debug --install-cursor-skill",
@@ -194,11 +208,11 @@ def main():
     )
     parser.add_argument(
         "--install-cursor-skill", action="store_true",
-        help="Install the swarm-debug Cursor AI skill to ~/.cursor/skills/",
+        help="Install the swarm-debug Cursor AI skill to .cursor/skills/ in the project root",
     )
     parser.add_argument(
         "--uninstall-cursor-skill", action="store_true",
-        help="Remove the swarm-debug Cursor AI skill from ~/.cursor/skills/",
+        help="Remove the swarm-debug Cursor AI skill from .cursor/skills/ in the project root",
     )
     subparsers = parser.add_subparsers(dest="command")
 
