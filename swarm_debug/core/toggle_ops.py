@@ -15,7 +15,7 @@ from swarm_debug.core.DEFAULTS import (
     set_root_dir,
 )
 from swarm_debug.core.models.DebugFile import DebugFile
-from swarm_debug.core.models.Directory import Directory
+from swarm_debug.core.models.Directory import Directory, lighten_color
 from swarm_debug.core.models.project_scanner import dir_to_output_format, update_debug_toggles
 
 
@@ -87,6 +87,38 @@ def _set_toggle_recursive(node: Union[DebugFile, Directory], state: bool):
             _set_toggle_recursive(child, state)
 
 
+def _set_color_recursive(node: Union[DebugFile, Directory], color: str):
+    """Propagate a lightened color to children, skipping ``set_manually_color`` nodes.
+
+    Mirrors the frontend's ``updateNodeColor`` propagation in treeUtils.ts.
+    Only the original target should have its ``set_manually_color`` set to True
+    by the caller; children are left untouched so future parent propagations
+    can still reach them.
+    """
+    if isinstance(node, Directory):
+        lightened = lighten_color(color)
+        for child in node.children:
+            if child.set_manually_color:
+                continue
+            child.color = lightened
+            _set_color_recursive(child, lightened)
+
+
+def _set_emoji_recursive(node: Union[DebugFile, Directory], emoji: str):
+    """Propagate an emoji to children, skipping ``set_manually_emoji`` nodes.
+
+    Mirrors the frontend's ``propagateEmoji`` in treeUtils.ts.  Only the
+    original target should have ``set_manually_emoji`` set to True by the
+    caller.
+    """
+    if isinstance(node, Directory):
+        for child in node.children:
+            if child.set_manually_emoji:
+                continue
+            child.emoji = emoji
+            _set_emoji_recursive(child, emoji)
+
+
 def toggle_node(tree: Directory, target_path: str, state: bool) -> bool:
     """Toggle a specific node. Returns True if the node was found."""
     node = find_node(tree, target_path)
@@ -108,7 +140,8 @@ def set_node_color(tree: Directory, target_path: str, color: str) -> bool:
     if node is None:
         return False
     node.color = color
-    node.set_manually = True
+    node.set_manually_color = True
+    _set_color_recursive(node, color)
     return True
 
 
@@ -118,6 +151,7 @@ def set_node_emoji(tree: Directory, target_path: str, emoji: str) -> bool:
         return False
     node.emoji = emoji
     node.set_manually_emoji = True
+    _set_emoji_recursive(node, emoji)
     return True
 
 

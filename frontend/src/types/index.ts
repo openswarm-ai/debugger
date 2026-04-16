@@ -3,6 +3,7 @@ export interface TreeNodeData {
   color: string;
   is_toggled: boolean;
   set_manually: boolean;
+  set_manually_color: boolean;
   set_manually_emoji: boolean;
   emoji: string;
   children?: TreeNodeData[];

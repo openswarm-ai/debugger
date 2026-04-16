@@ -1,9 +1,8 @@
 import os
 import json
-import colorsys
 from typing import Union
 from swarm_debug.core.models.Directory import Directory
-from swarm_debug.core.DEFAULTS import DEFAULT_COLOR, DEFAULT_TOGGLED, DEFAULT_SET_MANUALLY, DEFAULT_SET_MANUALLY_EMOJI, DEFAULT_EMOJI, get_root_dir
+from swarm_debug.core.DEFAULTS import DEFAULT_COLOR, DEFAULT_TOGGLED, DEFAULT_SET_MANUALLY, DEFAULT_SET_MANUALLY_COLOR, DEFAULT_SET_MANUALLY_EMOJI, DEFAULT_EMOJI, get_root_dir
 from swarm_debug.core.data_dir import get_data_file
 from swarm_debug.core.models.DebugFile import DebugFile
 from collections import OrderedDict
@@ -38,6 +37,7 @@ def merge_directories(json_dir: Directory, scanned_dir: Directory):
                 scanned_child.color = matching_json_child.color
                 scanned_child.is_toggled = matching_json_child.is_toggled
                 scanned_child.set_manually = matching_json_child.set_manually
+                scanned_child.set_manually_color = matching_json_child.set_manually_color
                 scanned_child.set_manually_emoji = matching_json_child.set_manually_emoji
                 scanned_child.emoji = matching_json_child.emoji
 
@@ -45,6 +45,7 @@ def merge_directories(json_dir: Directory, scanned_dir: Directory):
                 scanned_child.color = matching_json_child.color
                 scanned_child.is_toggled = matching_json_child.is_toggled
                 scanned_child.set_manually = matching_json_child.set_manually
+                scanned_child.set_manually_color = matching_json_child.set_manually_color
                 scanned_child.set_manually_emoji = matching_json_child.set_manually_emoji
                 scanned_child.emoji = matching_json_child.emoji
 
@@ -53,6 +54,7 @@ def merge_directories(json_dir: Directory, scanned_dir: Directory):
                 scanned_child.color = DEFAULT_COLOR
                 scanned_child.is_toggled = DEFAULT_TOGGLED
                 scanned_child.set_manually = DEFAULT_SET_MANUALLY
+                scanned_child.set_manually_color = DEFAULT_SET_MANUALLY_COLOR
                 scanned_child.set_manually_emoji = DEFAULT_SET_MANUALLY_EMOJI
                 scanned_child.emoji = DEFAULT_EMOJI
     
@@ -74,6 +76,7 @@ def update_debug_toggles(save_to_file=True) -> Directory:
                                             color=json_data[0].get('color', DEFAULT_COLOR),
                                             is_toggled=json_data[0].get('is_toggled', DEFAULT_TOGGLED),
                                             set_manually=json_data[0].get('set_manually', DEFAULT_SET_MANUALLY),
+                                            set_manually_color=json_data[0].get('set_manually_color', DEFAULT_SET_MANUALLY_COLOR),
                                             set_manually_emoji=json_data[0].get('set_manually_emoji', DEFAULT_SET_MANUALLY_EMOJI),
                                             emoji=json_data[0].get('emoji', DEFAULT_EMOJI)
                                             )
@@ -89,6 +92,7 @@ def update_debug_toggles(save_to_file=True) -> Directory:
                             color=json_loaded_dir.color if json_loaded_dir else DEFAULT_COLOR, 
                             is_toggled=json_loaded_dir.is_toggled if json_loaded_dir else DEFAULT_TOGGLED, 
                             set_manually=json_loaded_dir.set_manually if json_loaded_dir else DEFAULT_SET_MANUALLY,
+                            set_manually_color=json_loaded_dir.set_manually_color if json_loaded_dir else DEFAULT_SET_MANUALLY_COLOR,
                             set_manually_emoji=json_loaded_dir.set_manually_emoji if json_loaded_dir else DEFAULT_SET_MANUALLY_EMOJI,
                             emoji=json_loaded_dir.emoji if json_loaded_dir else DEFAULT_EMOJI
                             )
@@ -113,6 +117,7 @@ def dir_to_output_format(input_dir):
         "color": input_dir.color,
         "is_toggled": input_dir.is_toggled,
         "set_manually": input_dir.set_manually,
+        "set_manually_color": input_dir.set_manually_color,
         "set_manually_emoji": input_dir.set_manually_emoji,
         "emoji": input_dir.emoji,
         "children": input_dir.to_dict()["children"]

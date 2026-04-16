@@ -92,10 +92,10 @@ export function updateNodeColor(
     if (node.name !== parts[0]) return node;
 
     let newColor = node.color;
-    let setManually = node.set_manually;
+    let setManuallyColor = node.set_manually_color;
 
     if (parts.length === 1) {
-      if (isOriginalParent) setManually = true;
+      if (isOriginalParent) setManuallyColor = true;
       newColor = col;
     }
 
@@ -108,7 +108,7 @@ export function updateNodeColor(
         lightenAmount,
       );
       const propagatedChildren = updatedChildren.map((child) => {
-        if (!child.set_manually) {
+        if (!child.set_manually_color) {
           const newPath = [...parts.slice(1), child.name];
           return updateNodeColor(
             [child],
@@ -124,12 +124,12 @@ export function updateNodeColor(
         ...node,
         color: newColor,
         is_toggled: node.is_toggled,
-        set_manually: setManually,
+        set_manually_color: setManuallyColor,
         children: propagatedChildren,
       };
     }
 
-    return { ...node, color: newColor, is_toggled: node.is_toggled, set_manually: setManually };
+    return { ...node, color: newColor, is_toggled: node.is_toggled, set_manually_color: setManuallyColor };
   });
 }
 

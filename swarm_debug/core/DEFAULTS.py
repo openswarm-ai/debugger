@@ -4,6 +4,7 @@ from swarm_debug.core.data_dir import get_data_file
 DEFAULT_COLOR = '#ffffff'
 DEFAULT_TOGGLED = False
 DEFAULT_SET_MANUALLY = False
+DEFAULT_SET_MANUALLY_COLOR = False
 DEFAULT_SET_MANUALLY_EMOJI = False
 DEFAULT_EMOJI = '\u26ab'
 

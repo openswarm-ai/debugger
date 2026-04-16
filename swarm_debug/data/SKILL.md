@@ -60,9 +60,11 @@ swarm-debug toggle on  --all                    # everything
 
 # Configuration
 swarm-debug set-root /path/to/project
-swarm-debug set-color src/agents/planner.py "#ff0000"
-swarm-debug set-emoji src/agents/planner.py "🔴"
-swarm-debug reset                               # reset all colors/emojis
+swarm-debug set-color src/agents/planner.py "#ff0000"  # single file
+swarm-debug set-color src/agents/ "#ff0000"            # directory (propagates lightened color to children)
+swarm-debug set-emoji src/agents/planner.py "🔴"       # single file
+swarm-debug set-emoji src/agents/ "🔴"                 # directory (propagates emoji to children)
+swarm-debug reset                                      # reset all colors/emojis
 
 # GUI
 swarm-debug gui                 # launches web UI at localhost:6969
@@ -86,8 +88,8 @@ swarm-debug gui --port 8080
 
 ## Key behaviors
 
-- **Directory toggles propagate**: toggling a directory sets all children recursively.
-- **`set_manually` flag**: when you explicitly toggle a file, it gets `set_manually: true` so parent propagation won't override it.
+- **Directory changes propagate**: toggling, setting color, or setting emoji on a directory propagates to all children recursively.
+- **Manual-override flags**: each concern has its own flag (`set_manually` for toggles, `set_manually_color` for color, `set_manually_emoji` for emoji). When you explicitly set a file's value, its flag is set so parent propagation won't override it.
 - **Errors bypass toggles**: if a `debug()` argument is an Exception or contains "error", it always prints (red, with a cross emoji), regardless of toggle state.
 - **Indentation preserved**: `debug()` reads source indentation and renders nested output with visual indent bars.
 

@@ -1,12 +1,12 @@
 import os
-import colorsys
 from swarm_debug.core.models.DebugFile import DebugFile
-from swarm_debug.core.DEFAULTS import DEFAULT_COLOR, DEFAULT_TOGGLED, DEFAULT_SET_MANUALLY, DEFAULT_SET_MANUALLY_EMOJI, DEFAULT_EMOJI, get_root_dir
+from swarm_debug.core.DEFAULTS import DEFAULT_COLOR, DEFAULT_TOGGLED, DEFAULT_SET_MANUALLY, DEFAULT_SET_MANUALLY_COLOR, DEFAULT_SET_MANUALLY_EMOJI, DEFAULT_EMOJI, get_root_dir
 from swarm_debug.core.utils.path_mngr import get_abspath, get_root_rel_path
 
 class Directory:
     def __init__(self, path, color=DEFAULT_COLOR, is_toggled=DEFAULT_TOGGLED, 
-                 set_manually=DEFAULT_SET_MANUALLY, set_manually_emoji=DEFAULT_SET_MANUALLY_EMOJI,
+                 set_manually=DEFAULT_SET_MANUALLY, set_manually_color=DEFAULT_SET_MANUALLY_COLOR,
+                 set_manually_emoji=DEFAULT_SET_MANUALLY_EMOJI,
                  emoji=DEFAULT_EMOJI):
         self.path = path
         # print(f"Directory init: {self.path}")
@@ -14,6 +14,7 @@ class Directory:
         self.color = color
         self.is_toggled = is_toggled
         self.set_manually = set_manually
+        self.set_manually_color = set_manually_color
         self.set_manually_emoji = set_manually_emoji
         self.emoji = emoji
 
@@ -102,6 +103,7 @@ class Directory:
             "color": self.color,
             "is_toggled": self.is_toggled,
             "set_manually": self.set_manually,
+            "set_manually_color": self.set_manually_color,
             "set_manually_emoji": self.set_manually_emoji,
             "emoji": self.emoji,
             "children": [child.to_dict() if isinstance(child, DebugFile) else child.to_dict() for child in self.children]
@@ -133,12 +135,13 @@ class Directory:
 
     def propagate_color(self, parent_color=DEFAULT_COLOR):
         """
-        Propagates the color from parent to children.
+        Propagates the color from parent to children, skipping nodes whose
+        color was explicitly set by the user (``set_manually_color``).
         """
-        if self.color == DEFAULT_COLOR:
+        if not self.set_manually_color:
             self.color = lighten_color(parent_color)
         for child in self.children:
-            if isinstance(child, DebugFile) and child.color == DEFAULT_COLOR:
+            if isinstance(child, DebugFile) and not child.set_manually_color:
                 child.color = lighten_color(self.color)
             elif isinstance(child, Directory):
                 child.propagate_color(self.color)
@@ -154,6 +157,7 @@ class Directory:
                     color=item.get('color', DEFAULT_COLOR), 
                     is_toggled=item.get('is_toggled', DEFAULT_TOGGLED), 
                     set_manually=item.get('set_manually', DEFAULT_SET_MANUALLY),
+                    set_manually_color=item.get('set_manually_color', DEFAULT_SET_MANUALLY_COLOR),
                     set_manually_emoji=item.get('set_manually_emoji', DEFAULT_SET_MANUALLY_EMOJI),
                     emoji=item.get('emoji', DEFAULT_EMOJI)
                     )
@@ -167,6 +171,7 @@ class Directory:
                     color=item.get('color', DEFAULT_COLOR),
                     is_toggled=item.get('is_toggled', DEFAULT_TOGGLED),
                     set_manually=item.get('set_manually', DEFAULT_SET_MANUALLY),
+                    set_manually_color=item.get('set_manually_color', DEFAULT_SET_MANUALLY_COLOR),
                     set_manually_emoji=item.get('set_manually_emoji', DEFAULT_SET_MANUALLY_EMOJI),
                     emoji=item.get('emoji', DEFAULT_EMOJI),
                     directory=self
@@ -175,14 +180,14 @@ class Directory:
 
     def reset_colors(self):
         """
-        Resets the color and set_manually flag of all nodes to defaults.
+        Resets the color and set_manually_color flag of all nodes to defaults.
         """
         self.color = DEFAULT_COLOR
-        self.set_manually = DEFAULT_SET_MANUALLY
+        self.set_manually_color = DEFAULT_SET_MANUALLY_COLOR
         for child in self.children:
             if isinstance(child, DebugFile):
                 child.color = DEFAULT_COLOR
-                child.set_manually = DEFAULT_SET_MANUALLY
+                child.set_manually_color = DEFAULT_SET_MANUALLY_COLOR
             elif isinstance(child, Directory):
                 child.reset_colors()
 
@@ -200,17 +205,18 @@ class Directory:
                 child.reset_emojis()
 
 
-def lighten_color(color, amount=0.1):
+def lighten_color(color, amount=50):
     """
-    Lightens the given color by the specified amount.
+    Lightens the given color by adding ``amount`` to each RGB channel (clamped
+    at 255).  Matches the frontend ``lightenColor`` in treeUtils.ts so the CLI
+    and GUI produce identical child colors.
     """
     try:
         color = color.lstrip('#')
-        r, g, b = int(color[:2], 16), int(color[2:4], 16), int(color[4:6], 16)
-        h, l, s = colorsys.rgb_to_hls(r / 255.0, g / 255.0, b / 255.0)
-        l = min(1, l + amount)
-        r, g, b = colorsys.hls_to_rgb(h, l, s)
-        return '#{:02x}{:02x}{:02x}'.format(int(r * 255), int(g * 255), int(b * 255))
+        r = min(255, int(color[:2], 16) + amount)
+        g = min(255, int(color[2:4], 16) + amount)
+        b = min(255, int(color[4:6], 16) + amount)
+        return f'#{r:02x}{g:02x}{b:02x}'
     except Exception as e:
         print(f"Error lightening color {color}: {e}")
         return color
