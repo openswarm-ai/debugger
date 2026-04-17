@@ -44,6 +44,22 @@ debug("x=%s y=%s", x, y)  # %-style formatting
 
 `debug()` inspects the call stack to extract the caller's file, function, variable names, and indentation. No format strings or manual labels needed -- pass variables directly.
 
+### Full signature
+
+```python
+debug(*args, mode='debug', override_max_chars=False, sep=<auto>, end='\n',
+      pretty=True, lang=None, table=<auto>)
+```
+
+| Kwarg | Type | Default | Description |
+|---|---|---|---|
+| `mode` | `str` | `"debug"` | Log level. `"all"` (always), `"debug"` (default), `"test"` (high priority) |
+| `override_max_chars` | `bool` | `False` | Bypass the 3000-char truncation limit |
+| `sep` | `str` | auto | Join all args with this separator (like `print(sep=...)`) |
+| `pretty` | `bool` | `True` | Pretty-print dicts, lists, sets, tuples, dataclasses with Rich |
+| `lang` | `str\|None` | `None` | Syntax-highlight all args as this language (e.g. `"sql"`, `"json"`, `"html"`) |
+| `table` | `bool` | auto | Force table layout on/off. Auto-on when >1 non-text data args |
+
 ### Rich output features
 
 All output is rendered with Rich. Function names in the output are clickable file links (in terminals that support OSC 8 hyperlinks like iTerm2 and Windows Terminal). Type annotations are shown in dim text for non-string values.
@@ -63,10 +79,10 @@ debug(html_body, lang="html")      # HTML highlighting
 
 **Table layout** (auto: on when >1 non-text data args, off otherwise):
 ```python
-debug(x, y, z)               # 3 data args → table with Name | Type | Value columns
-debug(x)                     # single arg → inline output (no table)
-debug("msg", x)              # 1 text + 1 data arg → inline (only 1 data arg)
-debug("msg", x, y)           # 1 text + 2 data args → table
+debug(x, y, z)               # 3 data args -> table with Name | Type | Value columns
+debug(x)                     # single arg -> inline output (no table)
+debug("msg", x)              # 1 text + 1 data arg -> inline (only 1 data arg)
+debug("msg", x, y)           # 1 text + 2 data args -> table
 debug(x, y, z, table=False)  # force per-line output
 debug(x, table=True)         # force table even for a single arg
 ```
@@ -84,6 +100,8 @@ with debug.time("database query"):
 # prints: [func] : ⏱ database query took 0.123s  (green/yellow/red based on duration)
 ```
 
+**Truncation**: values over 3000 chars are truncated (first 1500 + `...` + last 1500). Pass `override_max_chars=True` to disable.
+
 **Indent group markers**: when indentation level changes between `debug()` calls, a visual rule line is emitted to mark the group boundary.
 
 ## CLI reference
@@ -94,6 +112,7 @@ All commands work standalone (no server required). Paths are relative to project
 # View current state
 swarm-debug status              # human-readable tree with [ON]/[OFF] tags
 swarm-debug status --json       # machine-readable JSON (pipe to jq, python, etc.)
+swarm-debug stats               # flat table of all files with path/status/color/emoji
 
 # Toggle visibility
 swarm-debug toggle on  src/agents/planner.py    # single file
@@ -106,11 +125,21 @@ swarm-debug set-color src/agents/planner.py "#ff0000"  # single file
 swarm-debug set-color src/agents/ "#ff0000"            # directory (propagates lightened color to children)
 swarm-debug set-emoji src/agents/planner.py "🔴"       # single file
 swarm-debug set-emoji src/agents/ "🔴"                 # directory (propagates emoji to children)
-swarm-debug reset                                      # reset all colors/emojis
+swarm-debug reset                                      # reset all colors/emojis (with confirmation)
 
 # GUI
 swarm-debug gui                 # launches web UI at localhost:6969
-swarm-debug gui --port 8080
+swarm-debug gui --port 8080     # custom port
+swarm-debug gui --verbose       # show all server logs in the terminal
+
+# Cursor skill management
+swarm-debug install-cursor-skill    # copy SKILL.md to .cursor/skills/swarm-debug/
+swarm-debug uninstall-cursor-skill  # remove the skill directory
+
+# Package management
+swarm-debug --version           # show version (also checks for updates and skill staleness)
+swarm-debug --upgrade           # upgrade to latest version from PyPI
+swarm-debug --help-all          # detailed help for all commands + API-only endpoints
 ```
 
 ## Typical workflow

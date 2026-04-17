@@ -157,31 +157,34 @@ def _upgrade_callback(value: bool):
         ))
         raise typer.Exit()
 
-    _console.print(f"  Installing swarm-debug==[bold]{latest}[/bold] …")
-
     pip_cmd = [sys.executable, "-m", "pip", "install", "--no-cache-dir", f"swarm-debug=={latest}"]
     max_attempts = 4
     delays = [5, 10, 20]
 
-    for attempt in range(1, max_attempts + 1):
-        result = subprocess.run(pip_cmd, capture_output=True, text=True)
+    with _console.status(
+        f"Installing swarm-debug==[bold]{latest}[/bold] …", spinner="dots",
+    ) as status:
+        for attempt in range(1, max_attempts + 1):
+            result = subprocess.run(pip_cmd, capture_output=True, text=True)
 
-        if result.returncode == 0:
-            break
+            if result.returncode == 0:
+                break
 
-        if attempt < max_attempts and "No matching distribution" in result.stderr:
-            wait = delays[attempt - 1]
-            _console.print(
-                f"  [yellow]Version {latest} not yet available on the CDN. "
-                f"Retrying in {wait}s ({attempt}/{max_attempts})…[/yellow]"
-            )
-            time.sleep(wait)
-        else:
-            _err_console.print(Panel(
-                f"[bold red]Upgrade failed[/bold red]\n{result.stderr.strip()}",
-                border_style="red",
-            ))
-            raise typer.Exit(code=1)
+            if attempt < max_attempts and "No matching distribution" in result.stderr:
+                wait = delays[attempt - 1]
+                status.update(
+                    f"[yellow]Version {latest} not yet available on the CDN. "
+                    f"Retrying in {wait}s ({attempt}/{max_attempts})…[/yellow]"
+                )
+                time.sleep(wait)
+                status.update(f"Installing swarm-debug==[bold]{latest}[/bold] …")
+            else:
+                status.stop()
+                _err_console.print(Panel(
+                    f"[bold red]Upgrade failed[/bold red]\n{result.stderr.strip()}",
+                    border_style="red",
+                ))
+                raise typer.Exit(code=1)
 
     _console.print(Panel(
         f"[bold green]Upgraded![/bold green] {old_ver} → {latest}",
